@@ -242,7 +242,8 @@ function tick() {
   if (event === 'rest-started') {
     state.pet = SM.send(state.pet, 'REST_START');
     notify('휴식 시간!', '잘했어요. 잠깐 쉬어가요 🎉');
-    say('휴식 시간이에요~ 🎉', 5000);
+    say('야호! 쉬는 시간이다~ 🎉', 5000);
+    cheerUntil = now + 3000; // 폴짝폴짝 환호 후 춤으로
     startRoaming();
   } else if (event === 'focus-started') {
     state.pet = SM.send(state.pet, 'FOCUS_START');
@@ -252,7 +253,8 @@ function tick() {
   } else if (event === 'cycle-ended') {
     state.pet = SM.send(state.pet, 'TIMER_STOP');
     notify('사이클 완료', '뽀모도로 한 사이클이 끝났어요!');
-    say('한 사이클 끝! 또 할까요?', 5000);
+    say('야호! 다 끝났어요~ 또 할까요? 🎉', 5000);
+    cheerUntil = now + 3000;
     stopRoaming();
   }
 

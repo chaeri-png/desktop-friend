@@ -186,4 +186,7 @@ window.api.on('debug-snaps', () => {
   setTimeout(() => player?.rotateBy?.(79, 0), 800);
   setTimeout(() => snap('3-back'), 1200);
   setTimeout(() => player?.endRotate?.(), 1400);
+  setTimeout(() => player?.setAnimation?.('focus'), 3600);
+  setTimeout(() => snap('4-focus'), 3800);
+  setTimeout(() => player?.setAnimation?.('idle'), 3950);
 });

@@ -188,14 +188,56 @@ export function createModel(container) {
     }
   }
 
-  // ---------- 앞발: 가슴에 모은 작은 손 ----------
+  // ---------- 앞발: 가슴에 모은 작은 손 (집중 중엔 키보드로) ----------
   const pawMat = new THREE.MeshStandardMaterial({ color: 0xfff6ec, roughness: 1 });
+  const paws = [];
   for (const sign of [-1, 1]) {
     const paw = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), pawMat);
     paw.scale.set(1, 0.85, 0.7);
     paw.position.set(0.22 * sign, -0.42, 1.13);
     pet.add(paw);
+    paws.push(paw);
   }
+
+  // ---------- 노트북 + 타이핑 손 (집중 모드에서만) ----------
+  const laptop = new THREE.Group();
+  let tapL, tapR;
+  {
+    const alu = new THREE.MeshStandardMaterial({ color: 0xd7d3ce, roughness: 0.55 });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.05, 0.6), alu);
+    const keys = new THREE.Mesh(
+      new THREE.BoxGeometry(0.82, 0.015, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0x8f8b86, roughness: 0.9 })
+    );
+    keys.position.set(0, 0.033, -0.02);
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.52, 0.04), alu);
+    screen.position.set(0, 0.21, 0.32);
+    screen.rotation.x = 0.5;
+    const glow = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.84, 0.42),
+      new THREE.MeshBasicMaterial({ color: 0xcfe8ff })
+    );
+    glow.position.set(0, 0.2, 0.29);
+    glow.rotation.x = 0.5;
+    glow.rotation.y = Math.PI;
+    // 뒷면 로고 스티커
+    const logo = new THREE.Mesh(
+      new THREE.CircleGeometry(0.11, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    logo.position.set(0, 0.23, 0.36);
+    logo.rotation.x = 0.5;
+    laptop.add(logo);
+    tapL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), pawMat);
+    tapR = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), pawMat);
+    tapL.position.set(-0.24, 0.12, -0.05);
+    tapR.position.set(0.24, 0.12, -0.05);
+    laptop.add(base, keys, screen, glow, tapL, tapR);
+  }
+  laptop.position.set(0, -1.15, 1.15);
+  laptop.scale.setScalar(1.05);
+  laptop.visible = false;
+  pet.add(laptop);
 
   // ---------- 뒷발: 바닥에 살짝 ----------
   const footMat = new THREE.MeshStandardMaterial({ color: 0xf2c8a8, roughness: 1 });
@@ -244,6 +286,9 @@ export function createModel(container) {
     if (name === anim) return;
     anim = name;
     headband.visible = name === 'focus';
+    laptop.visible = name === 'focus';
+    // 집중 중엔 가슴 앞발 대신 키보드 위 타이핑 손이 보임
+    paws.forEach((p) => { p.visible = name !== 'focus'; });
     if (name === 'react' || name === 'cheer') jumpStart = t;
     const s = name === 'drag' ? 1.3 : 1;
     eyeL.scale.setScalar(s);
@@ -325,6 +370,12 @@ export function createModel(container) {
     const ew = earWiggle ? Math.sin(t * 14) * earWiggle : 0;
     ears[0].rotation.z = 0.25 + ew;
     ears[1].rotation.z = -0.25 - ew;
+
+    // 타이핑: 두 손이 번갈아 타닥타닥
+    if (laptop.visible) {
+      tapL.position.y = 0.1 + Math.max(0, Math.sin(t * 11)) * 0.08;
+      tapR.position.y = 0.1 + Math.max(0, Math.sin(t * 11 + Math.PI)) * 0.08;
+    }
 
     if (!rotating && t - releasedAt > 0.8) {
       userYaw *= Math.max(0, 1 - dt * 3);

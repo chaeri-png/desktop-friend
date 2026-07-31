@@ -192,6 +192,49 @@ export function createModel(container) {
     bird.add(foot);
   }
 
+  // ---------- 노트북 + 타이핑 손 (집중 모드에서만) ----------
+  const laptop = new THREE.Group();
+  let tapL, tapR;
+  {
+    const alu = new THREE.MeshStandardMaterial({ color: 0xd7d3ce, roughness: 0.55 });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.6), alu);
+    const keys = new THREE.Mesh(
+      new THREE.BoxGeometry(0.78, 0.015, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0x8f8b86, roughness: 0.9 })
+    );
+    keys.position.set(0, 0.033, -0.02);
+    // 화면은 카메라 쪽에 서서 펫을 향해 열려 있음 (우리는 노트북 뒷면을 봄)
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.5, 0.04), alu);
+    screen.position.set(0, 0.2, 0.32);
+    screen.rotation.x = 0.5;
+    const glow = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.8, 0.4),
+      new THREE.MeshBasicMaterial({ color: 0xcfe8ff })
+    );
+    glow.position.set(0, 0.19, 0.29);
+    glow.rotation.x = 0.5;
+    glow.rotation.y = Math.PI;
+    // 뒷면 로고 스티커
+    const logo = new THREE.Mesh(
+      new THREE.CircleGeometry(0.105, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    logo.position.set(0, 0.22, 0.36);
+    logo.rotation.x = 0.5;
+    laptop.add(logo);
+    // 키보드 위 타이핑 손 (하얀 날개 끝)
+    const pawMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+    tapL = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), pawMat);
+    tapR = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), pawMat);
+    tapL.position.set(-0.22, 0.12, -0.05);
+    tapR.position.set(0.22, 0.12, -0.05);
+    laptop.add(base, keys, screen, glow, tapL, tapR);
+  }
+  laptop.position.set(0, -1.3, 1.05);
+  laptop.scale.setScalar(1.05);
+  laptop.visible = false;
+  bird.add(laptop);
+
   // ---------- 집중 머리띠 (focus에서만) ----------
   const headband = new THREE.Mesh(
     new THREE.TorusGeometry(0.82, 0.08, 12, 40),
@@ -222,6 +265,7 @@ export function createModel(container) {
     if (name === anim) return;
     anim = name;
     headband.visible = name === 'focus';
+    laptop.visible = name === 'focus';
     if (name === 'react' || name === 'cheer') jumpStart = t;
     const s = name === 'drag' ? 1.3 : 1;
     eyeL.scale.setScalar(s);
@@ -298,6 +342,12 @@ export function createModel(container) {
       const eyeY = t < blinkUntil ? 0.1 : 1;
       eyeL.scale.y = eyeY;
       eyeR.scale.y = eyeY;
+    }
+
+    // 타이핑: 두 손이 번갈아 타닥타닥
+    if (laptop.visible) {
+      tapL.position.y = 0.1 + Math.max(0, Math.sin(t * 11)) * 0.08;
+      tapR.position.y = 0.1 + Math.max(0, Math.sin(t * 11 + Math.PI)) * 0.08;
     }
 
     if (!rotating && t - releasedAt > 0.8) {

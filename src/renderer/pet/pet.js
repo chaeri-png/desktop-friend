@@ -1,5 +1,4 @@
 import { createGesture, down, move, up, tick } from '../../shared/gesture.js';
-import { createBird3D } from './bird3d.js';
 
 const sprite = document.getElementById('sprite');
 const stage = document.getElementById('stage');
@@ -70,8 +69,10 @@ function create2DPlayer(cfg, baseUrl) {
 }
 
 // ---------- 3D 플레이어 + 제스처 (드래그=회전, 길게 누르면 이동) ----------
-function create3DPlayer() {
-  const bird = createBird3D(stage);
+// 캐릭터 폴더의 model.js를 동적으로 불러온다 (캐릭터 팩 = character.json + model.js)
+async function create3DPlayer(baseUrl) {
+  const { createModel } = await import(`${baseUrl}/model.js`);
+  const bird = createModel(stage);
 
   let g = createGesture();
   let longTimer = null;
@@ -135,7 +136,7 @@ async function init() {
   if (cfg.type === '3d') {
     sprite.hidden = true;
     stage.hidden = false;
-    player = create3DPlayer();
+    player = await create3DPlayer(data.baseUrl);
   } else {
     stage.hidden = true;
     sprite.hidden = false;
@@ -172,3 +173,17 @@ document.addEventListener('contextmenu', (e) => {
 });
 
 init();
+
+// 개발용: 메인이 debug-snaps를 보내면 정면/옆/뒷모습을 찍어 보낸다 (BAEPSAE_SNAP=1일 때만 옴)
+window.api.on('debug-snaps', () => {
+  const snap = (name) => {
+    const cv = stage.querySelector('canvas');
+    if (cv) window.api.send('debug-snap', { name, data: cv.toDataURL('image/png') });
+  };
+  snap('1-front');
+  setTimeout(() => player?.rotateBy?.(79, 0), 200);
+  setTimeout(() => snap('2-side'), 600);
+  setTimeout(() => player?.rotateBy?.(79, 0), 800);
+  setTimeout(() => snap('3-back'), 1200);
+  setTimeout(() => player?.endRotate?.(), 1400);
+});

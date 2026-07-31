@@ -1,9 +1,9 @@
 // 흰머리오목눈이(뱁새) 3D — 실물 사진 기반 부드러운 스타일
 // 핵심: 무늬는 몸 표면 텍스처에 붓으로 그리듯 그려 입히고,
 // 실루엣은 미세한 요철 + 역광 조명으로 보송한 솜털 느낌을 낸다
-import * as THREE from '../vendor/three.module.js';
+import * as THREE from '../../src/renderer/vendor/three.module.js';
 
-export function createBird3D(container) {
+export function createModel(container) {
   const W = container.clientWidth || 150;
   const H = container.clientHeight || 170;
 

@@ -38,6 +38,14 @@ function loadCharacter(name) {
 }
 ipcMain.handle('get-character', () => loadCharacter(state.store.character));
 
+// 개발용: BAEPSAE_SNAP=1 로 실행하면 펫 창이 정면/옆/뒷모습 스냅샷을 프로젝트 루트에 저장
+const SNAP_MODE = !!process.env.BAEPSAE_SNAP && !app.isPackaged;
+ipcMain.on('debug-snap', (_e, { name, data }) => {
+  if (!SNAP_MODE) return;
+  const safe = String(name).replace(/[^\w-]/g, '');
+  fs.writeFileSync(path.join(ROOT, `debug-${safe}.png`), Buffer.from(data.split(',')[1], 'base64'));
+});
+
 // ---------- 말풍선·알림 ----------
 export function say(text, ms = 4000) {
   petWin?.webContents.send('say', { text, ms });
@@ -289,6 +297,7 @@ app.whenReady().then(() => {
     autoRepeat: state.store.autoRepeat,
   });
   petWin = createPetWindow();
+  if (SNAP_MODE) setTimeout(() => petWin.webContents.send('debug-snaps'), 2500);
   setInterval(tick, 1000);
   createTray({
     onToggle: () => (petWin.isVisible() ? petWin.hide() : petWin.show()),

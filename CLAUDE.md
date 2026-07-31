@@ -11,6 +11,8 @@
 - ✅ **3D 리디자인 완료** — 뱁새를 실물(흰머리오목눈이) 기반 Three.js 3D로 교체. 스펙: `docs/superpowers/specs/2026-07-31-baepsae-3d-design.md`
   - 조작: 드래그=회전, 길게 누르기(400ms) 후 드래그=창 이동, 클릭=인사, 더블클릭=일과 완료, 우클릭=메뉴
   - `character.json`의 `"type": "3d"`로 3D/2D 분기 (2D 캐릭터 팩은 기존 방식 그대로 동작)
+  - 3D 캐릭터 팩 = `characters/<이름>/character.json` + `model.js` (`createModel(container)` export). 현재 뱁새·햄스터 2종
+  - 모델 확인용 스냅샷: `BAEPSAE_SNAP=1`로 실행하면 정면/옆/뒷모습 PNG가 프로젝트 루트에 저장됨
   - three.js는 `src/renderer/vendor/three.module.js`로 벤더링(번들러 없음)
 - 남은 확인: Windows에서 눈으로 직접 동작 확인, 설치 파일 재빌드(`npm run icons` 후 `npm run dist:win` — 현재 exe는 2D 시절 빌드), Mac 팀원 기기에서 `npm run dist:mac` 빌드
 

@@ -1,10 +1,10 @@
-import { BrowserWindow, screen } from 'electron';
+import { BrowserWindow, screen, app } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const PET_W = 170;
-export const PET_H = 210;
+export const PET_W = 180;
+export const PET_H = 240;
 
 export function createPetWindow() {
   const { workArea } = screen.getPrimaryDisplay();
@@ -22,6 +22,12 @@ export function createPetWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.cjs') },
   });
   win.loadFile(path.join(__dirname, '../renderer/pet/pet.html'));
+  // 개발 중에만: 펫 창 콘솔 메시지를 터미널로 전달 (렌더러 오류 확인용)
+  if (!app.isPackaged) {
+    win.webContents.on('console-message', (_e, _level, message) => {
+      console.log('[pet]', message);
+    });
+  }
   return win;
 }
 

@@ -8,6 +8,7 @@ import * as SM from '../shared/stateMachine.js';
 import * as ST from '../shared/store.js';
 import * as SC from '../shared/schedule.js';
 import { shouldNag, pickMessage } from '../shared/nagger.js';
+import { createTray } from './tray.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CHARACTERS_DIR = path.join(__dirname, '../../characters');
@@ -273,6 +274,12 @@ app.whenReady().then(() => {
   });
   petWin = createPetWindow();
   setInterval(tick, 1000);
+  createTray({
+    onToggle: () => (petWin.isVisible() ? petWin.hide() : petWin.show()),
+    onSettings: openSettings,
+    onStartTimer: startTimer,
+    onStopTimer: stopTimer,
+  });
 });
 
 app.on('window-all-closed', () => {

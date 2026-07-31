@@ -272,11 +272,14 @@ function tick() {
 
 // ---------- 시작 ----------
 app.whenReady().then(() => {
-  protocol.handle('app', (req) => {
+  protocol.handle('app', async (req) => {
     const { pathname } = new URL(req.url);
     const filePath = path.normalize(path.join(ROOT, decodeURIComponent(pathname)));
     if (!filePath.startsWith(ROOT)) return new Response('forbidden', { status: 403 });
-    return net.fetch(pathToFileURL(filePath).href);
+    const res = await net.fetch(pathToFileURL(filePath).href);
+    const headers = new Headers(res.headers);
+    headers.set('cache-control', 'no-store'); // 예전 파일이 캐시로 남지 않게
+    return new Response(res.body, { status: res.status, headers });
   });
   state.store = ST.rolloverIfNewDay(ST.load(CONFIG_FILE()), todayStr());
   ST.save(CONFIG_FILE(), state.store);

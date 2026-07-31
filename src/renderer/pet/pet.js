@@ -111,6 +111,8 @@ function create3DPlayer() {
 
   return {
     setAnimation: bird.setAnimation,
+    rotateBy: bird.rotateBy,
+    endRotate: bird.endRotate,
     dispose() {
       clearTimeout(longTimer);
       stage.removeEventListener('mousedown', onDown);

@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { NAG_MESSAGES, GREET_MESSAGES, shouldNag, pickMessage, pickFrom } from '../src/shared/nagger.js';
+import {
+  NAG_MESSAGES,
+  GREET_MESSAGES,
+  shouldNag,
+  pickMessage,
+  pickFrom,
+  bucketForHour,
+  linesForHour,
+} from '../src/shared/nagger.js';
 
 const MIN = 60_000;
 
@@ -23,5 +31,23 @@ describe('nagger', () => {
     expect(GREET_MESSAGES.length).toBeGreaterThanOrEqual(8);
     expect(GREET_MESSAGES).toContain(pickFrom(GREET_MESSAGES, () => 0));
     expect(GREET_MESSAGES).toContain(pickFrom(GREET_MESSAGES, () => 0.999));
+  });
+
+  it('시간을 시간대로 나눈다', () => {
+    expect(bucketForHour(7)).toBe('morning');
+    expect(bucketForHour(12)).toBe('lunch');
+    expect(bucketForHour(15)).toBe('afternoon');
+    expect(bucketForHour(19)).toBe('evening');
+    expect(bucketForHour(23)).toBe('night');
+    expect(bucketForHour(2)).toBe('night');
+  });
+
+  it('linesForHour는 공통 대사 + 현재 시간대 대사를 합친다', () => {
+    const lines = { any: ['a'], lunch: ['점심'], night: ['밤'] };
+    expect(linesForHour(lines, 12)).toEqual(['a', '점심']);
+    expect(linesForHour(lines, 23)).toEqual(['a', '밤']);
+    expect(linesForHour(lines, 15)).toEqual(['a']); // 오후 대사가 없으면 공통만
+    expect(linesForHour(['x', 'y'], 12)).toEqual(['x', 'y']); // 배열이면 그대로 (하위 호환)
+    expect(linesForHour(null, 12)).toEqual([]);
   });
 });

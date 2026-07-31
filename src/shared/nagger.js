@@ -34,3 +34,19 @@ export function pickFrom(list, rand = Math.random) {
 export function pickMessage(rand = Math.random) {
   return pickFrom(NAG_MESSAGES, rand);
 }
+
+// 시간대 구분: 아침 5~10시, 점심 11~13시, 오후 14~17시, 저녁 18~21시, 밤 22~4시
+export function bucketForHour(hour) {
+  if (hour >= 5 && hour < 11) return 'morning';
+  if (hour >= 11 && hour < 14) return 'lunch';
+  if (hour >= 14 && hour < 18) return 'afternoon';
+  if (hour >= 18 && hour < 22) return 'evening';
+  return 'night';
+}
+
+// lines가 배열이면 그대로, {any, morning, ...} 형태면 공통 + 현재 시간대 대사를 합친다
+export function linesForHour(lines, hour) {
+  if (Array.isArray(lines)) return lines;
+  if (!lines || typeof lines !== 'object') return [];
+  return [...(lines.any ?? []), ...(lines[bucketForHour(hour)] ?? [])];
+}

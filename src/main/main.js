@@ -7,7 +7,7 @@ import * as T from '../shared/timer.js';
 import * as SM from '../shared/stateMachine.js';
 import * as ST from '../shared/store.js';
 import * as SC from '../shared/schedule.js';
-import { shouldNag, pickMessage, pickFrom, GREET_MESSAGES } from '../shared/nagger.js';
+import { shouldNag, pickMessage, pickFrom, linesForHour, GREET_MESSAGES } from '../shared/nagger.js';
 import { createTray } from './tray.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -44,7 +44,7 @@ function charInfo() {
     return {
       name: config.displayName ?? '펫',
       emoji: config.emoji ?? '✨',
-      lines: Array.isArray(config.lines) ? config.lines : [],
+      lines: config.lines ?? [],
     };
   } catch {
     return { name: '펫', emoji: '✨', lines: [] };
@@ -213,9 +213,10 @@ ipcMain.on('pet-click', () => {
   if (state.pet.state !== 'idle') return;
   state.pet = SM.send(state.pet, 'CLICK');
   const info = charInfo();
-  // 캐릭터 전용 대사가 있으면 그걸, 없으면 공용 인사말
-  const pool = info.lines.length ? info.lines : GREET_MESSAGES;
-  say(pickFrom(pool).replaceAll('{name}', info.name).replaceAll('{emoji}', info.emoji), 3500);
+  // 캐릭터 전용 대사(공통 + 현재 시간대)가 있으면 그걸, 없으면 공용 인사말
+  const pool = linesForHour(info.lines, new Date().getHours());
+  const line = pickFrom(pool.length ? pool : GREET_MESSAGES);
+  say(line.replaceAll('{name}', info.name).replaceAll('{emoji}', info.emoji), 3500);
   pushView();
   setTimeout(() => {
     state.pet = SM.send(state.pet, 'REACT_END');

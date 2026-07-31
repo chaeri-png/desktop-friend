@@ -1,6 +1,7 @@
 {
   "name": "baepsae",
   "displayName": "뱁새",
+  "emoji": "🐦",
   "type": "3d",
   "animations": {
     "idle":    { "frames": ["idle.svg", "idle.svg", "idle.svg", "blink.svg"], "intervalMs": 700 },

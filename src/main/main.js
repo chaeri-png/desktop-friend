@@ -36,6 +36,16 @@ function loadCharacter(name) {
   const config = JSON.parse(fs.readFileSync(path.join(dir, 'character.json'), 'utf8'));
   return { config, baseUrl: `app://root/characters/${name}` };
 }
+
+// 현재 캐릭터의 이름·이모지 (말풍선 문구용)
+function charInfo() {
+  try {
+    const { config } = loadCharacter(state.store.character);
+    return { name: config.displayName ?? '펫', emoji: config.emoji ?? '✨' };
+  } catch {
+    return { name: '펫', emoji: '✨' };
+  }
+}
 ipcMain.handle('get-character', () => loadCharacter(state.store.character));
 
 // 개발용: BAEPSAE_SNAP=1 로 실행하면 펫 창이 정면/옆/뒷모습 스냅샷을 프로젝트 루트에 저장
@@ -197,7 +207,7 @@ ipcMain.on('drag-end', () => {
 ipcMain.on('pet-click', () => {
   if (state.pet.state !== 'idle') return;
   state.pet = SM.send(state.pet, 'CLICK');
-  say('안녕! 🐦', 2000);
+  say(`안녕! ${charInfo().emoji}`, 2000);
   pushView();
   setTimeout(() => {
     state.pet = SM.send(state.pet, 'REACT_END');
@@ -272,7 +282,8 @@ function tick() {
     })
   ) {
     state.lastNagAt = now;
-    say(pickMessage(), 5000);
+    const info = charInfo();
+    say(pickMessage().replaceAll('{name}', info.name).replaceAll('{emoji}', info.emoji), 5000);
   }
 
   pushView();

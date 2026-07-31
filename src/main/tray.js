@@ -9,7 +9,7 @@ export function createTray({ onToggle, onSettings, onStartTimer, onStopTimer }) 
   tray.setToolTip('뱁새 데스크펫');
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: '뱁새 숨기기/보이기', click: onToggle },
+      { label: '펫 숨기기/보이기', click: onToggle },
       { label: '설정 열기', click: onSettings },
       { type: 'separator' },
       { label: '타이머 시작', click: onStartTimer },

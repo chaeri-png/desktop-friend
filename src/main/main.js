@@ -1,39 +1,215 @@
-import { app, ipcMain } from 'electron';
+import { app, ipcMain, screen, Notification } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createPetWindow } from './windows.js';
+import { createPetWindow, PET_W, PET_H } from './windows.js';
+import * as T from '../shared/timer.js';
+import * as SM from '../shared/stateMachine.js';
+import * as ST from '../shared/store.js';
+import { shouldNag, pickMessage } from '../shared/nagger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CHARACTERS_DIR = path.join(__dirname, '../../characters');
+const CONFIG_FILE = () => path.join(app.getPath('userData'), 'config.json');
+const todayStr = () => new Date().toISOString().slice(0, 10);
 
 let petWin = null;
-let characterName = 'baepsae';
+const state = {
+  store: null,
+  timer: null,
+  pet: SM.createPet(),
+  lastNagAt: Date.now(),
+  idleFunUntil: 0,
+};
 
+// ---------- 캐릭터 ----------
 function loadCharacter(name) {
   const dir = path.join(CHARACTERS_DIR, name);
   const config = JSON.parse(fs.readFileSync(path.join(dir, 'character.json'), 'utf8'));
   return { config, baseUrl: pathToFileURL(dir).href };
 }
+ipcMain.handle('get-character', () => loadCharacter(state.store.character));
 
-ipcMain.handle('get-character', () => loadCharacter(characterName));
-
+// ---------- 말풍선·알림 ----------
 export function say(text, ms = 4000) {
   petWin?.webContents.send('say', { text, ms });
 }
+function notify(title, body) {
+  new Notification({ title, body }).show();
+}
 
+// ---------- 로밍 (휴식 중 떠다니기) ----------
+let roamTimer = null;
+let homePos = null;
+
+function randomTarget() {
+  const { workArea } = screen.getPrimaryDisplay();
+  return {
+    x: workArea.x + Math.floor(Math.random() * (workArea.width - PET_W)),
+    y: workArea.y + Math.floor(Math.random() * (workArea.height - PET_H)),
+  };
+}
+
+function startRoaming() {
+  stopRoaming(false);
+  homePos = petWin.getPosition();
+  let target = randomTarget();
+  roamTimer = setInterval(() => {
+    const [x, y] = petWin.getPosition();
+    const dx = target.x - x;
+    const dy = target.y - y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 5) { target = randomTarget(); return; }
+    petWin.setPosition(Math.round(x + (dx / dist) * 3), Math.round(y + (dy / dist) * 3));
+  }, 16);
+}
+
+function stopRoaming(goHome = true) {
+  clearInterval(roamTimer);
+  roamTimer = null;
+  if (goHome && homePos) petWin.setPosition(homePos[0], homePos[1]);
+  homePos = null;
+}
+
+// ---------- 뷰모델 ----------
+function animationFor(petState, now) {
+  if (petState === 'idle') return now < state.idleFunUntil ? 'idleFun' : 'idle';
+  return petState; // focus | rest | drag | react → 동명의 애니메이션
+}
+
+function statusFor(now) {
+  if (state.timer.phase === 'focus') return `집중 중 · ${T.formatMs(T.remainingMs(state.timer, now))}`;
+  if (state.timer.phase === 'rest') return `휴식 중 · ${T.formatMs(T.remainingMs(state.timer, now))}`;
+  return null;
+}
+
+function pushView() {
+  const now = Date.now();
+  petWin?.webContents.send('view', {
+    animation: animationFor(state.pet.state, now),
+    status: statusFor(now),
+  });
+}
+
+// ---------- 타이머 제어 ----------
+function startTimer() {
+  state.timer = T.start(state.timer, Date.now());
+  state.pet = SM.send(state.pet, 'FOCUS_START');
+  stopRoaming();
+  say('집중 시작! 파이팅 🔥', 3000);
+  pushView();
+}
+
+function stopTimer() {
+  state.timer = T.stop(state.timer);
+  state.pet = SM.send(state.pet, 'TIMER_STOP');
+  stopRoaming();
+  pushView();
+}
+
+ipcMain.on('start-timer', startTimer);
+ipcMain.on('stop-timer', stopTimer);
+
+// ---------- 스토어 ----------
+ipcMain.handle('get-store', () => state.store);
+ipcMain.handle('set-store', (_e, partial) => {
+  applyStore(partial);
+  return state.store;
+});
+
+function applyStore(partial) {
+  state.store = { ...state.store, ...partial };
+  ST.save(CONFIG_FILE(), state.store);
+  state.timer = {
+    ...state.timer,
+    focusMs: state.store.focusMin * 60_000,
+    restMs: state.store.restMin * 60_000,
+    autoRepeat: state.store.autoRepeat,
+  };
+}
+
+// ---------- 클릭/드래그 ----------
 ipcMain.on('drag-move', (_e, { dx, dy }) => {
   if (!petWin) return;
   const [x, y] = petWin.getPosition();
   petWin.setPosition(x + dx, y + dy);
 });
-
+ipcMain.on('drag-start', () => {
+  stopRoaming(false);
+  state.pet = SM.send(state.pet, 'DRAG_START');
+  pushView();
+});
+ipcMain.on('drag-end', () => {
+  state.pet = SM.send(state.pet, 'DRAG_END');
+  if (state.pet.state === 'rest') startRoaming();
+  pushView();
+});
 ipcMain.on('pet-click', () => {
-  say('안녕! 🐦', 2000);
+  if (state.pet.state !== 'idle') return;
+  state.pet = SM.send(state.pet, 'CLICK');
+  pushView();
+  setTimeout(() => {
+    state.pet = SM.send(state.pet, 'REACT_END');
+    pushView();
+  }, 1200);
 });
 
+// ---------- 1초 tick ----------
+function tick() {
+  const now = Date.now();
+  const { timer, event } = T.tick(state.timer, now);
+  state.timer = timer;
+
+  if (event === 'rest-started') {
+    state.pet = SM.send(state.pet, 'REST_START');
+    notify('휴식 시간!', '잘했어요. 잠깐 쉬어가요 🎉');
+    say('휴식 시간이에요~ 🎉', 5000);
+    startRoaming();
+  } else if (event === 'focus-started') {
+    state.pet = SM.send(state.pet, 'FOCUS_START');
+    notify('집중 시간!', '다시 집중해 볼까요? 🔥');
+    say('다시 집중! 🔥', 4000);
+    stopRoaming();
+  } else if (event === 'cycle-ended') {
+    state.pet = SM.send(state.pet, 'TIMER_STOP');
+    notify('사이클 완료', '뽀모도로 한 사이클이 끝났어요!');
+    say('한 사이클 끝! 또 할까요?', 5000);
+    stopRoaming();
+  }
+
+  // 유휴 랜덤 모션: idle일 때 낮은 확률로 3초간 idleFun 재생
+  if (state.pet.state === 'idle' && now >= state.idleFunUntil && Math.random() < 0.02) {
+    state.idleFunUntil = now + 3000;
+  }
+
+  // 잔소리
+  if (
+    state.pet.state !== 'focus' &&
+    shouldNag({
+      enabled: state.store.nagEnabled,
+      lastAt: state.lastNagAt,
+      intervalMin: state.store.nagIntervalMin,
+      now,
+    })
+  ) {
+    state.lastNagAt = now;
+    say(pickMessage(), 5000);
+  }
+
+  pushView();
+}
+
+// ---------- 시작 ----------
 app.whenReady().then(() => {
+  state.store = ST.rolloverIfNewDay(ST.load(CONFIG_FILE()), todayStr());
+  ST.save(CONFIG_FILE(), state.store);
+  state.timer = T.createTimer({
+    focusMin: state.store.focusMin,
+    restMin: state.store.restMin,
+    autoRepeat: state.store.autoRepeat,
+  });
   petWin = createPetWindow();
+  setInterval(tick, 1000);
 });
 
 app.on('window-all-closed', () => {

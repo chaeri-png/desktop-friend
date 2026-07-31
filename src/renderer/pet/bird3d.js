@@ -1,24 +1,7 @@
-// 흰머리오목눈이(뱁새) 3D — 복셀(픽셀 블록) 스타일
-// 참고 사진 기준: 머리·몸이 하나로 이어진 새하얀 계란형 눈덩이,
-// 까만 콩알 눈 + 아주 작은 부리, 머리 옆 검은 줄무늬, 접은 검은 날개, 긴 꼬리
+// 흰머리오목눈이(뱁새) 3D — 실물 사진 기반 부드러운 스타일
+// 핵심: 무늬는 몸 표면 텍스처에 붓으로 그리듯 그려 입히고,
+// 실루엣은 미세한 요철 + 역광 조명으로 보송한 솜털 느낌을 낸다
 import * as THREE from '../vendor/three.module.js';
-
-const COLORS = {
-  white: 0xffffff,
-  dark: 0x35302c,
-  blush: 0xf4c8bc,
-  shoulder: 0xdfc3b8,
-  band: 0xe05a4e,
-};
-
-const V = 0.26; // 복셀 한 칸 크기
-
-// 계란형 실루엣: 아래로 갈수록 통통
-function radiusAt(gy) {
-  const t = gy / 7.4;
-  const base = 4.5 * Math.sqrt(Math.max(0, 1 - t * t));
-  return base * (1 + 0.13 * (0.5 - gy / 14.8));
-}
 
 export function createBird3D(container) {
   const W = container.clientWidth || 150;
@@ -27,7 +10,7 @@ export function createBird3D(container) {
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
     antialias: true,
-    preserveDrawingBuffer: true, // 스냅샷 저장용
+    preserveDrawingBuffer: true,
   });
   renderer.setPixelRatio(window.devicePixelRatio || 1);
   renderer.setSize(W, H);
@@ -35,134 +18,187 @@ export function createBird3D(container) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 50);
-  camera.position.set(0, 0.25, 7.2);
+  camera.position.set(0, 0.3, 7.0);
   camera.lookAt(0, -0.1, 0);
 
-  // three r155+ 물리 조명 기준: 흰 몸이 하얗게 보이되 면 구분은 남게
-  scene.add(new THREE.AmbientLight(0xffffff, 2.0));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.6);
-  sun.position.set(2, 4, 5);
-  scene.add(sun);
+  // 조명: 부드러운 주광 + 뒤에서 비추는 역광(솜털 테두리)
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8cec6, 2.6));
+  const key = new THREE.DirectionalLight(0xfff8f0, 1.6);
+  key.position.set(2, 4, 5);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffffff, 1.8);
+  rim.position.set(-1.5, 3, -4);
+  scene.add(rim);
 
   const pivot = new THREE.Group(); // 사용자 드래그 회전
   const bird = new THREE.Group(); // 상태 애니메이션
   pivot.add(bird);
   scene.add(pivot);
 
-  // ---------- 몸통: 복셀 계란 ----------
-  const voxels = [];
-  for (let gy = -7; gy <= 7; gy++) {
-    const r = radiusAt(gy);
-    if (r <= 0.4) continue;
-    for (let gx = -6; gx <= 6; gx++) {
-      for (let gz = -6; gz <= 6; gz++) {
-        const rr = Math.hypot(gx, gz);
-        if (rr > r) continue;
-        let color = COLORS.white;
-        const surface = rr >= r - 1.5;
-        if (surface) {
-          if (gy >= 3 && gy <= 5 && Math.abs(gx) >= r * 0.68) {
-            color = COLORS.dark; // 정수리 옆 얇은 검은 줄무늬
-          } else if (gy >= -3 && gy <= -1 && gz <= -1.5 && Math.abs(gx) >= r * 0.55) {
-            color = COLORS.dark; // 등쪽에 접은 날개
-          } else if (gy >= 0 && gy <= 1 && gz <= -2.5 && Math.abs(gx) >= r * 0.65) {
-            color = COLORS.shoulder; // 어깨 살구빛
-          }
-        }
-        voxels.push({ x: gx, y: gy, z: gz, color });
+  // ---------- 몸 텍스처: 캔버스에 그려서 입히기 ----------
+  // 좌표계: 캔버스 x = 몸 둘레(u), 캔버스 y 위쪽 = 머리 꼭대기
+  // (u는 스냅샷 보정 결과: 정면이 u=0.5 부근)
+  function makeBodyTexture() {
+    const S = 1024;
+    const cv = document.createElement('canvas');
+    cv.width = S;
+    cv.height = S;
+    const ctx = cv.getContext('2d');
+
+    // 바탕: 새하얀 몸 + 아래쪽 은은한 따뜻한 그늘
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, S, S);
+    const grad = ctx.createLinearGradient(0, S * 0.55, 0, S);
+    grad.addColorStop(0, 'rgba(238,228,218,0)');
+    grad.addColorStop(1, 'rgba(238,228,218,0.55)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, S, S);
+
+    // 미세한 털 결 (아주 옅은 세로 스트로크)
+    ctx.strokeStyle = 'rgba(214,205,196,0.09)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 500; i++) {
+      const x = ((i * 379) % S) + ((i * 131) % 7) - 3;
+      const y = (i * 613) % S;
+      const len = 14 + ((i * 17) % 22);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + ((i % 5) - 2) * 2, y + len);
+      ctx.stroke();
+    }
+
+    // 이음새(u=0/1)에 걸쳐도 끊기지 않게 좌우 반복해 그리는 타원 헬퍼
+    // 정면 = u 0.25, 등 = u 0.75
+    function blob(cx, cy, rx, ry, rot, fill) {
+      ctx.fillStyle = fill;
+      for (const off of [-1, 0, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(S * (cx + off), S * cy, S * rx, S * ry, rot, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
+
+    ctx.filter = 'blur(12px)';
+    // 정수리 옆 굵은 검은 줄무늬 (눈 위 → 뒤통수로 갈수록 살짝 처짐)
+    blob(0.11, 0.15, 0.115, 0.058, 0.35, 'rgba(36,30,26,0.95)');
+    blob(0.39, 0.15, 0.115, 0.058, -0.35, 'rgba(36,30,26,0.95)');
+    // 볼터치 (정면 양옆, 은은하게)
+    blob(0.175, 0.3, 0.042, 0.028, 0, 'rgba(242,178,164,0.42)');
+    blob(0.325, 0.3, 0.042, 0.028, 0, 'rgba(242,178,164,0.42)');
+    ctx.filter = 'blur(8px)';
+    // 등쪽 접은 날개 (등 가운데로 모이는 V자, 아래로 갈수록 뒤로)
+    blob(0.65, 0.56, 0.06, 0.13, -0.35, 'rgba(42,35,30,0.95)');
+    blob(0.85, 0.56, 0.06, 0.13, 0.35, 'rgba(42,35,30,0.95)');
+    // 어깨의 은은한 살구빛 (날개 위)
+    blob(0.66, 0.37, 0.05, 0.055, 0, 'rgba(206,158,140,0.36)');
+    blob(0.84, 0.37, 0.05, 0.055, 0, 'rgba(206,158,140,0.36)');
+    ctx.filter = 'none';
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
   }
-  const boxGeo = new THREE.BoxGeometry(V * 0.98, V * 0.98, V * 0.98);
-  const bodyMesh = new THREE.InstancedMesh(
-    boxGeo,
-    new THREE.MeshLambertMaterial({ color: 0xffffff }),
-    voxels.length
-  );
+
+  // ---------- 몸: 사진 실루엣 기반 조형 ----------
+  // 구에서 시작해 아래는 넓고 둥글게(배), 가슴은 앞으로 봉긋, 정수리는 살짝 좁게
+  const eggGeo = new THREE.SphereGeometry(1.25, 64, 48);
   {
-    const m = new THREE.Matrix4();
-    const c = new THREE.Color();
-    voxels.forEach((v, i) => {
-      m.setPosition(v.x * V, v.y * V, v.z * V);
-      bodyMesh.setMatrixAt(i, m);
-      c.set(v.color);
-      if (v.color === COLORS.white) {
-        // 복셀마다 미세한 밝기 차이 → 보송한 털 느낌 (좌표 기반이라 항상 동일)
-        const n = 0.955 + ((Math.abs(v.x * 7 + v.y * 13 + v.z * 17) % 5) / 5) * 0.045;
-        c.multiplyScalar(n);
-      }
-      bodyMesh.setColorAt(i, c);
-    });
+    const pos = eggGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i);
+      let y = pos.getY(i);
+      let z = pos.getZ(i);
+      const ny = y / 1.25; // -1(아래) .. 1(위)
+      y *= 1.16; // 세로로 살짝 길게
+      const belly = Math.max(0, -ny);
+      const w = 1 + 0.17 * Math.pow(belly, 1.3); // 아래로 갈수록 넉넉하게 (바닥은 둥글게 유지)
+      x *= w;
+      z *= w;
+      if (z > 0) z += 0.11 * Math.pow(belly, 1.4) * (z / 1.25); // 가슴 봉긋
+      const crown = Math.max(0, ny - 0.55);
+      x *= 1 - 0.07 * crown; // 정수리 살짝 좁게
+      z *= 1 - 0.05 * crown;
+      // 미세 요철 (솜털 실루엣) — 좌표 기반이라 항상 동일
+      const h = Math.sin(x * 41.7 + y * 27.3) * Math.cos(z * 33.1 - y * 19.7);
+      const amp = 0.015 * h;
+      const len = Math.hypot(x, y, z) || 1;
+      pos.setXYZ(i, x + (x / len) * amp, y + (y / len) * amp, z + (z / len) * amp);
+    }
+    eggGeo.computeVertexNormals();
   }
-  bird.add(bodyMesh);
+  const body = new THREE.Mesh(
+    eggGeo,
+    new THREE.MeshStandardMaterial({ map: makeBodyTexture(), roughness: 1 })
+  );
+  bird.add(body);
 
-  const lambert = (color) => new THREE.MeshLambertMaterial({ color });
-
-  // ---------- 눈: 까만 콩알 + 반짝 (블록) ----------
+  // ---------- 눈: 크고 촉촉한 까만 구슬 + 반짝 ----------
   function makeEye(sign) {
     const eye = new THREE.Group();
-    const ball = new THREE.Mesh(new THREE.BoxGeometry(V * 1.5, V * 1.5, V * 0.9), lambert(COLORS.dark));
-    const shine = new THREE.Mesh(
-      new THREE.BoxGeometry(V * 0.55, V * 0.55, V * 0.3),
+    const ball = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 24, 18),
+      new THREE.MeshStandardMaterial({ color: 0x191410, roughness: 0.25 })
+    );
+    const shine1 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 12, 8),
       new THREE.MeshBasicMaterial({ color: 0xffffff })
     );
-    shine.position.set(-V * 0.35 * sign, V * 0.35, V * 0.4);
-    eye.add(ball, shine);
-    eye.position.set(0.4 * sign, 0.5, 1.14);
+    shine1.position.set(-0.045 * sign, 0.05, 0.115);
+    const shine2 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.022, 10, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    shine2.position.set(0.05 * sign, -0.04, 0.12);
+    eye.add(ball, shine1, shine2);
+    eye.position.set(0.35 * sign, 0.56, 1.1);
     return eye;
   }
   const eyeL = makeEye(-1);
   const eyeR = makeEye(1);
   bird.add(eyeL, eyeR);
 
-  // ---------- 부리: 아주 작은 까만 블록 ----------
-  const beak = new THREE.Mesh(new THREE.BoxGeometry(V * 0.7, V * 0.55, V * 1.0), lambert(COLORS.dark));
-  beak.position.set(0, 0.24, 1.24);
+  // ---------- 부리: 아주 작고 뭉툭한 세모 ----------
+  const beak = new THREE.Mesh(
+    new THREE.ConeGeometry(0.085, 0.16, 16),
+    new THREE.MeshStandardMaterial({ color: 0x241f1b, roughness: 0.6 })
+  );
+  beak.rotation.x = Math.PI / 2 - 0.15;
+  beak.position.set(0, 0.38, 1.24);
   bird.add(beak);
 
-  // ---------- 볼터치 (연분홍 블록) ----------
-  const cheekMat = new THREE.MeshBasicMaterial({ color: COLORS.blush, transparent: true, opacity: 0.85 });
-  const cheekGeo = new THREE.BoxGeometry(V * 1.3, V * 0.8, V * 0.4);
-  const cheekL = new THREE.Mesh(cheekGeo, cheekMat);
-  const cheekR = new THREE.Mesh(cheekGeo, cheekMat);
-  cheekL.position.set(-0.78, 0.22, 1.0);
-  cheekR.position.set(0.78, 0.22, 1.0);
-  bird.add(cheekL, cheekR);
-
-  // ---------- 꼬리: 길고 검은 복셀 막대 (가장자리 흰 줄) ----------
+  // ---------- 꼬리: 길고 검은 깃 + 흰 가장자리 ----------
   const tail = new THREE.Group();
-  for (const col of [-1, 0, 1]) {
-    for (let i = 0; i < 6; i++) {
-      // 몸쪽은 검게, 바깥 깃 끝만 희게 (실물처럼)
-      const color = col !== 0 && i >= 4 ? COLORS.white : COLORS.dark;
-      const seg = new THREE.Mesh(new THREE.BoxGeometry(V * 0.95, V * 0.55, V * 1.3), lambert(color));
-      seg.position.set(col * V, -i * V * 0.22, -i * V * 0.6);
-      tail.add(seg);
-    }
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x2a2420, roughness: 0.9 });
+  const whiteMat = new THREE.MeshStandardMaterial({ color: 0xe9e4dd, roughness: 0.95 });
+  for (const [x, mat, len, w] of [
+    [-0.115, whiteMat, 1.45, 0.08],
+    [0, darkMat, 1.7, 0.15],
+    [0.115, whiteMat, 1.45, 0.08],
+  ]) {
+    const seg = new THREE.Mesh(new THREE.BoxGeometry(w, 0.07, len), mat);
+    seg.position.set(x, 0, -len / 2 + 0.15);
+    tail.add(seg);
   }
-  tail.position.set(0, -0.7, -1.0);
+  tail.position.set(0, -0.85, -1.0);
+  tail.rotation.x = -0.45;
   bird.add(tail);
 
-  // ---------- 발: 앙증맞은 까만 블록 ----------
-  const footGeo = new THREE.BoxGeometry(V * 1.1, V * 0.5, V * 1.5);
-  const footL = new THREE.Mesh(footGeo, lambert(COLORS.dark));
-  const footR = new THREE.Mesh(footGeo, lambert(COLORS.dark));
-  footL.position.set(-0.34, -1.95, 0.3);
-  footR.position.set(0.34, -1.95, 0.3);
-  bird.add(footL, footR);
-
-  // ---------- 집중 머리띠: 빨간 복셀 링 (focus에서만) ----------
-  const headband = new THREE.Group();
-  {
-    const ringY = 3.2;
-    const ringR = radiusAt(ringY) * V + V * 0.2;
-    for (let k = 0; k < 18; k++) {
-      const a = (k / 18) * Math.PI * 2;
-      const seg = new THREE.Mesh(new THREE.BoxGeometry(V * 0.9, V * 0.7, V * 0.9), lambert(COLORS.band));
-      seg.position.set(Math.cos(a) * ringR, ringY * V, Math.sin(a) * ringR);
-      headband.add(seg);
-    }
+  // ---------- 발: 앙증맞은 짧은 다리 ----------
+  const footMat = new THREE.MeshStandardMaterial({ color: 0x35302c, roughness: 0.8 });
+  for (const sign of [-1, 1]) {
+    const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.12, 6, 10), footMat);
+    foot.rotation.x = Math.PI / 2;
+    foot.position.set(0.3 * sign, -1.52, 0.25);
+    bird.add(foot);
   }
+
+  // ---------- 집중 머리띠 (focus에서만) ----------
+  const headband = new THREE.Mesh(
+    new THREE.TorusGeometry(0.82, 0.08, 12, 40),
+    new THREE.MeshStandardMaterial({ color: 0xe05a4e, roughness: 0.7 })
+  );
+  headband.rotation.x = 1.25;
+  headband.position.set(0, 0.95, 0.05);
   headband.visible = false;
   bird.add(headband);
 
@@ -239,7 +275,6 @@ export function createBird3D(container) {
     bird.rotation.x = tilt;
     bird.rotation.z = wobble ? Math.sin(t * 16) * wobble : 0;
 
-    // 통통(bob) + 점프 — 젤리 스쿼시
     const bob = Math.sin(t * bobSpeed * 2) * bobAmp;
     let jump = 0;
     if (anim === 'cheer') {
@@ -255,18 +290,16 @@ export function createBird3D(container) {
     bird.scale.x = sq;
     bird.scale.z = sq;
 
-    // 눈 깜빡 (드래그 중엔 놀란 눈 유지)
     if (anim !== 'drag') {
       if (t > blinkAt) {
         blinkUntil = t + 0.12;
         blinkAt = t + 2 + Math.random() * 3;
       }
-      const eyeY = t < blinkUntil ? 0.12 : 1;
+      const eyeY = t < blinkUntil ? 0.1 : 1;
       eyeL.scale.y = eyeY;
       eyeR.scale.y = eyeY;
     }
 
-    // 사용자 회전: 놓고 잠시 후 천천히 정면 복귀
     if (!rotating && t - releasedAt > 0.8) {
       userYaw *= Math.max(0, 1 - dt * 3);
       userPitch *= Math.max(0, 1 - dt * 3);

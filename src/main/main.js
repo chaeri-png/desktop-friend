@@ -1,8 +1,8 @@
-import { app, ipcMain, screen, Notification } from 'electron';
+import { app, ipcMain, screen, Notification, Menu } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createPetWindow, PET_W, PET_H } from './windows.js';
+import { createPetWindow, createSettingsWindow, PET_W, PET_H } from './windows.js';
 import * as T from '../shared/timer.js';
 import * as SM from '../shared/stateMachine.js';
 import * as ST from '../shared/store.js';
@@ -134,9 +134,36 @@ function applyStore(partial) {
     restMs: state.store.restMin * 60_000,
     autoRepeat: state.store.autoRepeat,
   };
+  if (partial.character) petWin?.webContents.send('character-changed', null);
+  if ('autoStart' in partial) app.setLoginItemSettings({ openAtLogin: state.store.autoStart });
 }
 
 // ---------- 클릭/드래그 ----------
+let settingsWin = null;
+
+function openSettings() {
+  if (settingsWin && !settingsWin.isDestroyed()) { settingsWin.focus(); return; }
+  settingsWin = createSettingsWindow();
+}
+
+ipcMain.handle('list-characters', () =>
+  fs.readdirSync(CHARACTERS_DIR).map((name) => {
+    const cfg = JSON.parse(fs.readFileSync(path.join(CHARACTERS_DIR, name, 'character.json'), 'utf8'));
+    return { name, displayName: cfg.displayName };
+  })
+);
+
+ipcMain.on('pet-context', () => {
+  Menu.buildFromTemplate([
+    { label: '설정 열기', click: openSettings },
+    { type: 'separator' },
+    { label: '타이머 시작', click: startTimer },
+    { label: '타이머 정지', click: stopTimer },
+    { type: 'separator' },
+    { label: '종료', click: () => app.quit() },
+  ]).popup({ window: petWin });
+});
+
 ipcMain.on('drag-move', (_e, { dx, dy }) => {
   if (!petWin) return;
   const [x, y] = petWin.getPosition();
@@ -249,5 +276,6 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  app.quit();
+  // 펫 창이 살아 있는 동안은 종료하지 않는다 (트레이 상주 앱)
+  if (!petWin || petWin.isDestroyed()) app.quit();
 });

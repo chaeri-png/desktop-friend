@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="settings.css">
+  <title>뱁새 데스크펫 설정</title>
+</head>
+<body>
+  <h1>🐦 뱁새 데스크펫</h1>
+
+  <section>
+    <h2>뽀모도로</h2>
+    <label>집중 <input id="focusMin" type="number" min="1" max="180"> 분</label>
+    <label>휴식 <input id="restMin" type="number" min="1" max="60"> 분</label>
+    <label><input id="autoRepeat" type="checkbox"> 휴식 후 자동 반복</label>
+    <div class="row">
+      <button id="startTimer">타이머 시작</button>
+      <button id="stopTimer">정지</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>오늘 일과</h2>
+    <ul id="scheduleList"></ul>
+    <div class="row">
+      <input id="newText" type="text" placeholder="할 일">
+      <input id="newTime" type="time">
+      <button id="addItem">추가</button>
+    </div>
+    <button id="restorePrev">어제 일과 불러오기</button>
+  </section>
+
+  <section>
+    <h2>캐릭터·알림</h2>
+    <label>캐릭터 <select id="character"></select></label>
+    <label><input id="nagEnabled" type="checkbox"> 잔소리(물·스트레칭) 켜기</label>
+    <label>잔소리 간격 <input id="nagIntervalMin" type="number" min="5" max="240"> 분</label>
+    <label><input id="autoStart" type="checkbox"> 컴퓨터 켤 때 자동 시작</label>
+  </section>
+
+  <script src="settings.js"></script>
+</body>
+</html>

@@ -81,3 +81,10 @@ sprite.addEventListener('contextmenu', (e) => {
   e.preventDefault();
   window.api.send('pet-context');
 });
+
+window.api.on('character-changed', async () => {
+  const data = await window.api.invoke('get-character');
+  cfg = data.config;
+  baseUrl = data.baseUrl;
+  play('idle');
+});

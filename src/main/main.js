@@ -67,6 +67,7 @@ function notify(title, body) {
 // ---------- 로밍 (휴식 중 떠다니기) ----------
 let roamTimer = null;
 let homePos = null;
+let roamRecalled = false; // 휴식 중 더블클릭으로 불러들인 상태 (이번 휴식엔 다시 안 날아다님)
 
 function randomTarget() {
   const { workArea } = screen.getPrimaryDisplay();
@@ -201,7 +202,7 @@ ipcMain.on('drag-start', () => {
 });
 ipcMain.on('drag-end', () => {
   state.pet = SM.send(state.pet, 'DRAG_END');
-  if (state.pet.state === 'rest') startRoaming();
+  if (state.pet.state === 'rest' && !roamRecalled) startRoaming();
   pushView();
 });
 ipcMain.on('pet-click', () => {
@@ -218,6 +219,14 @@ ipcMain.on('pet-click', () => {
 let cheerUntil = 0;
 
 ipcMain.on('pet-dblclick', () => {
+  // 휴식 로밍 중이면 더블클릭 = 제자리 복귀
+  if (roamTimer) {
+    stopRoaming();
+    roamRecalled = true;
+    say('네~ 제자리로 갈게요!', 3000);
+    pushView();
+    return;
+  }
   const cur = SC.currentItem(state.store.schedule);
   if (!cur) return;
   applyStore({ schedule: SC.completeCurrent(state.store.schedule) });
@@ -244,6 +253,7 @@ function tick() {
     notify('휴식 시간!', '잘했어요. 잠깐 쉬어가요 🎉');
     say('야호! 쉬는 시간이다~ 🎉', 5000);
     cheerUntil = now + 3000; // 폴짝폴짝 환호 후 춤으로
+    roamRecalled = false; // 새 휴식이니 다시 신나게
     startRoaming();
   } else if (event === 'focus-started') {
     state.pet = SM.send(state.pet, 'FOCUS_START');

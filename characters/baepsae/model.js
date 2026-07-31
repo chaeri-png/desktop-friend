@@ -78,12 +78,7 @@ export function createModel(container) {
       }
     }
 
-    // 정수리 옆 굵은 검은 줄무늬 — 진하고 길게, 눈 위에서 뒤통수까지 이어지게
-    ctx.filter = 'blur(7px)';
-    blob(0.1, 0.13, 0.13, 0.07, 0.45, 'rgba(30,26,23,1)');
-    blob(0.4, 0.13, 0.13, 0.07, -0.45, 'rgba(30,26,23,1)');
-    blob(0.02, 0.19, 0.12, 0.062, 0.2, 'rgba(30,26,23,1)');
-    blob(0.48, 0.19, 0.12, 0.062, -0.2, 'rgba(30,26,23,1)');
+    // 머리는 무늬 없이 새하얗게
     ctx.filter = 'blur(12px)';
     // 볼터치 (정면 양옆, 은은하게)
     blob(0.175, 0.3, 0.042, 0.028, 0, 'rgba(242,178,164,0.42)');
@@ -253,15 +248,28 @@ export function createModel(container) {
   laptop.visible = false;
   bird.add(laptop);
 
-  // ---------- 집중 머리띠 (focus에서만) ----------
-  const headband = new THREE.Mesh(
-    new THREE.TorusGeometry(0.82, 0.08, 12, 40),
-    new THREE.MeshStandardMaterial({ color: 0xe05a4e, roughness: 0.7 })
-  );
-  headband.rotation.x = 1.25;
-  headband.position.set(0, 0.95, 0.05);
-  headband.visible = false;
-  bird.add(headband);
+  // ---------- 헤드셋 (항상 착용 — 작업하는 새) ----------
+  const headset = new THREE.Group();
+  {
+    const dark = new THREE.MeshStandardMaterial({ color: 0x3a3532, roughness: 0.7 });
+    const coral = new THREE.MeshStandardMaterial({ color: 0xe05a4e, roughness: 0.6 });
+    // 머리 위를 넘어가는 밴드 (반원)
+    const band = new THREE.Mesh(new THREE.TorusGeometry(1.28, 0.08, 12, 40, Math.PI), dark);
+    band.scale.y = 0.78;
+    band.position.set(0, 0.5, 0.1);
+    headset.add(band);
+    // 양쪽 이어컵 + 코럴 포인트
+    for (const sign of [-1, 1]) {
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.16, 24), dark);
+      cup.rotation.z = Math.PI / 2;
+      cup.position.set(1.24 * sign, 0.5, 0.1);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.03, 20), coral);
+      cap.rotation.z = Math.PI / 2;
+      cap.position.set((1.24 + 0.09) * sign, 0.5, 0.1);
+      headset.add(cup, cap);
+    }
+  }
+  bird.add(headset);
 
   // ---------- 애니메이션 상태 ----------
   let anim = 'idle';
@@ -282,7 +290,6 @@ export function createModel(container) {
   function setAnimation(name) {
     if (name === anim) return;
     anim = name;
-    headband.visible = name === 'focus';
     laptop.visible = name === 'focus';
     if (name === 'react' || name === 'cheer') jumpStart = t;
     const s = name === 'drag' ? 1.3 : 1;

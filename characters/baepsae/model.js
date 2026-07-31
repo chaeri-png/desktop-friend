@@ -251,19 +251,21 @@ export function createModel(container) {
   // ---------- 헤드셋 (항상 착용 — 작업하는 새) ----------
   const headset = new THREE.Group();
   {
-    const dark = new THREE.MeshStandardMaterial({ color: 0x3a3532, roughness: 0.7 });
-    const coral = new THREE.MeshStandardMaterial({ color: 0xe05a4e, roughness: 0.6 });
+    // 애플 헤드셋 느낌: 베이지 패브릭 밴드 + 알루미늄 이어컵 (노트북과 세트)
+    const fabric = new THREE.MeshStandardMaterial({ color: 0xbfb7ac, roughness: 1 });
+    const alu = new THREE.MeshStandardMaterial({ color: 0xd7d3ce, roughness: 0.5 });
+    const pad = new THREE.MeshStandardMaterial({ color: 0xa89f93, roughness: 0.9 });
     // 머리 위를 넘어가는 밴드 (반원)
-    const band = new THREE.Mesh(new THREE.TorusGeometry(1.28, 0.08, 12, 40, Math.PI), dark);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(1.28, 0.08, 12, 40, Math.PI), fabric);
     band.scale.y = 0.78;
     band.position.set(0, 0.5, 0.1);
     headset.add(band);
-    // 양쪽 이어컵 + 코럴 포인트
+    // 양쪽 이어컵(알루미늄) + 바깥 패드 포인트
     for (const sign of [-1, 1]) {
-      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.16, 24), dark);
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.16, 24), alu);
       cup.rotation.z = Math.PI / 2;
       cup.position.set(1.24 * sign, 0.5, 0.1);
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.03, 20), coral);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.03, 20), pad);
       cap.rotation.z = Math.PI / 2;
       cap.position.set((1.24 + 0.09) * sign, 0.5, 0.1);
       headset.add(cup, cap);

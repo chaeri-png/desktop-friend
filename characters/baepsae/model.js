@@ -109,16 +109,13 @@ export function createModel(container) {
       let y = pos.getY(i);
       let z = pos.getZ(i);
       const ny = y / 1.25; // -1(아래) .. 1(위)
-      y *= 1.2; // 서양배처럼 세로로 길게
-      const belly = Math.max(0, -ny);
-      const w = 1 + 0.3 * Math.pow(belly, 1.1); // 아래는 확실히 통통하게
+      y *= 1.15; // 세로로 살짝 길게
+      // 정수리는 동그란 돔 그대로 두고, 눈 아래(ny 0.25)부터 몸이 불어난다
+      const below = Math.max(0, 0.25 - ny);
+      const w = 1 + 0.34 * Math.pow(below / 1.25, 0.8); // 눈 밑에서 빠르게 넓어져 배가 통통
       x *= w;
       z *= w;
-      if (z > 0) z += 0.12 * Math.pow(belly, 1.3) * (z / 1.25); // 가슴 봉긋
-      const crown = Math.max(0, ny - 0.25);
-      const slim = 1 - 0.22 * Math.pow(crown / 0.75, 1.4); // 위로 갈수록 갸름하게
-      x *= slim;
-      z *= slim;
+      if (z > 0) z += 0.1 * Math.pow(Math.max(0, -ny), 1.3) * (z / 1.25); // 가슴 봉긋
       // 미세 요철 (솜털 실루엣) — 좌표 기반이라 항상 동일
       const h = Math.sin(x * 41.7 + y * 27.3) * Math.cos(z * 33.1 - y * 19.7);
       const amp = 0.015 * h;
@@ -160,12 +157,27 @@ export function createModel(container) {
 
   // ---------- 부리: 아주 작고 뭉툭한 세모 ----------
   const beak = new THREE.Mesh(
-    new THREE.ConeGeometry(0.085, 0.16, 16),
-    new THREE.MeshStandardMaterial({ color: 0x241f1b, roughness: 0.6 })
+    new THREE.ConeGeometry(0.11, 0.26, 16),
+    new THREE.MeshStandardMaterial({ color: 0x1d1815, roughness: 0.5 })
   );
-  beak.rotation.x = Math.PI / 2 - 0.15;
+  beak.rotation.x = Math.PI / 2 - 0.3; // 살짝 아래를 향해 정면에서도 또렷하게
   beak.position.set(0, 0.38, 1.24);
   bird.add(beak);
+
+  // ---------- 날개: 몸에 접은 검은 날개 (새라는 게 보이게) ----------
+  const wingMat = new THREE.MeshStandardMaterial({ color: 0x2e2a26, roughness: 0.95 });
+  const wingGeo = new THREE.SphereGeometry(0.62, 24, 18);
+  const wingL = new THREE.Mesh(wingGeo, wingMat);
+  const wingR = new THREE.Mesh(wingGeo, wingMat);
+  wingL.scale.set(0.24, 0.95, 0.62);
+  wingR.scale.set(0.24, 0.95, 0.62);
+  wingL.position.set(-1.34, -0.5, -0.25);
+  wingR.position.set(1.34, -0.5, -0.25);
+  wingL.rotation.z = 0.28;
+  wingR.rotation.z = -0.28;
+  wingL.rotation.y = 0.35;
+  wingR.rotation.y = -0.35;
+  bird.add(wingL, wingR);
 
   // ---------- 꼬리: 길고 검은 깃 + 흰 가장자리 ----------
   const tail = new THREE.Group();
@@ -362,6 +374,14 @@ export function createModel(container) {
       tapL.position.y = 0.1 + Math.max(0, Math.sin(t * 11)) * 0.08;
       tapR.position.y = 0.1 + Math.max(0, Math.sin(t * 11 + Math.PI)) * 0.08;
     }
+
+    // 날개 파닥임 (휴식·환호·드래그)
+    const flutter =
+      anim === 'drag' || anim === 'rest' || anim === 'cheer' || anim === 'idleFun'
+        ? Math.sin(t * 18) * 0.35
+        : 0;
+    wingL.rotation.z = 0.28 + flutter;
+    wingR.rotation.z = -0.28 - flutter;
 
     if (returning) {
       userYaw *= Math.max(0, 1 - dt * 5);

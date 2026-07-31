@@ -328,7 +328,7 @@ app.whenReady().then(() => {
     autoRepeat: state.store.autoRepeat,
   });
   petWin = createPetWindow();
-  if (SNAP_MODE) setTimeout(() => petWin.webContents.send('debug-snaps'), 2500);
+  if (SNAP_MODE) setTimeout(() => petWin.webContents.send('debug-snaps'), 3300);
   setInterval(tick, 1000);
   createTray({
     onToggle: () => (petWin.isVisible() ? petWin.hide() : petWin.show()),

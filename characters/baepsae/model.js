@@ -109,15 +109,16 @@ export function createModel(container) {
       let y = pos.getY(i);
       let z = pos.getZ(i);
       const ny = y / 1.25; // -1(아래) .. 1(위)
-      y *= 1.16; // 세로로 살짝 길게
+      y *= 1.2; // 서양배처럼 세로로 길게
       const belly = Math.max(0, -ny);
-      const w = 1 + 0.17 * Math.pow(belly, 1.3); // 아래로 갈수록 넉넉하게 (바닥은 둥글게 유지)
+      const w = 1 + 0.3 * Math.pow(belly, 1.1); // 아래는 확실히 통통하게
       x *= w;
       z *= w;
-      if (z > 0) z += 0.11 * Math.pow(belly, 1.4) * (z / 1.25); // 가슴 봉긋
-      const crown = Math.max(0, ny - 0.55);
-      x *= 1 - 0.07 * crown; // 정수리 살짝 좁게
-      z *= 1 - 0.05 * crown;
+      if (z > 0) z += 0.12 * Math.pow(belly, 1.3) * (z / 1.25); // 가슴 봉긋
+      const crown = Math.max(0, ny - 0.25);
+      const slim = 1 - 0.22 * Math.pow(crown / 0.75, 1.4); // 위로 갈수록 갸름하게
+      x *= slim;
+      z *= slim;
       // 미세 요철 (솜털 실루엣) — 좌표 기반이라 항상 동일
       const h = Math.sin(x * 41.7 + y * 27.3) * Math.cos(z * 33.1 - y * 19.7);
       const amp = 0.015 * h;

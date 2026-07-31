@@ -6,6 +6,7 @@ import { createPetWindow, PET_W, PET_H } from './windows.js';
 import * as T from '../shared/timer.js';
 import * as SM from '../shared/stateMachine.js';
 import * as ST from '../shared/store.js';
+import * as SC from '../shared/schedule.js';
 import { shouldNag, pickMessage } from '../shared/nagger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -73,13 +74,20 @@ function stopRoaming(goHome = true) {
 
 // ---------- 뷰모델 ----------
 function animationFor(petState, now) {
+  if (now < cheerUntil) return 'cheer';
   if (petState === 'idle') return now < state.idleFunUntil ? 'idleFun' : 'idle';
   return petState; // focus | rest | drag | react → 동명의 애니메이션
 }
 
 function statusFor(now) {
-  if (state.timer.phase === 'focus') return `집중 중 · ${T.formatMs(T.remainingMs(state.timer, now))}`;
-  if (state.timer.phase === 'rest') return `휴식 중 · ${T.formatMs(T.remainingMs(state.timer, now))}`;
+  const cur = SC.currentItem(state.store.schedule);
+  const timerPart =
+    state.timer.phase === 'focus' ? `집중 중 · ${T.formatMs(T.remainingMs(state.timer, now))}` :
+    state.timer.phase === 'rest' ? `휴식 중 · ${T.formatMs(T.remainingMs(state.timer, now))}` :
+    null;
+  if (cur && timerPart) return `${cur.text} · ${timerPart}`;
+  if (timerPart) return timerPart;
+  if (cur) return `지금: ${cur.text}`;
   return null;
 }
 
@@ -154,6 +162,24 @@ ipcMain.on('pet-click', () => {
   }, 1200);
 });
 
+let cheerUntil = 0;
+
+ipcMain.on('pet-dblclick', () => {
+  const cur = SC.currentItem(state.store.schedule);
+  if (!cur) return;
+  applyStore({ schedule: SC.completeCurrent(state.store.schedule) });
+  cheerUntil = Date.now() + 2500;
+  const next = SC.currentItem(state.store.schedule);
+  say(next ? `"${cur.text}" 완료! 🎉 다음은 "${next.text}"!` : `"${cur.text}" 완료! 오늘 일과 끝 🎉`, 5000);
+  pushView();
+});
+
+ipcMain.on('restore-prev-schedule', () => {
+  applyStore(ST.restorePrevSchedule(state.store));
+  say('어제 일과를 불러왔어요!', 3000);
+  pushView();
+});
+
 // ---------- 1초 tick ----------
 function tick() {
   const now = Date.now();
@@ -180,6 +206,16 @@ function tick() {
   // 유휴 랜덤 모션: idle일 때 낮은 확률로 3초간 idleFun 재생
   if (state.pet.state === 'idle' && now >= state.idleFunUntil && Math.random() < 0.02) {
     state.idleFunUntil = now + 3000;
+  }
+
+  // 정시 알림 (시간 지정 일과)
+  const due = SC.dueAlerts(state.store.schedule, new Date());
+  if (due.length) {
+    for (const item of due) {
+      notify('일정 알림', `${item.time} — ${item.text}`);
+      say(`${item.time}이에요! "${item.text}" 시간~ ⏰`, 6000);
+    }
+    applyStore({ schedule: SC.markNotified(state.store.schedule, due.map((i) => i.id)) });
   }
 
   // 잔소리

@@ -7,20 +7,21 @@
 
 - ✅ 브레인스토밍 완료 → 디자인 문서 승인됨
 - ✅ 구현 계획 작성 완료 (13개 작업, TDD 기반)
-- ⏸️ **구현은 아직 시작 안 함** — 여기서 일시 중지된 상태
-- 코드·node_modules 없음. 문서 2개와 이 파일만 존재
+- ✅ **Task 1~13 구현 완료** — 단위 테스트 28개 전부 통과, Windows 설치 파일 빌드 성공
+- `release/뱁새 데스크펫 Setup 0.1.0.exe` 생성됨 (release/는 .gitignore 대상)
+- 남은 확인: Windows에서 눈으로 직접 동작 확인(드래그·말풍선·휴식 로밍·트레이), Mac 팀원 기기에서 `npm run dist:mac` 빌드
 
-## 핵심 문서 (반드시 이 순서로 읽을 것)
+## 핵심 문서
 
 1. `docs/superpowers/specs/2026-07-31-desk-pet-design.md` — 승인된 디자인 (무엇을 만드는지)
-2. `docs/superpowers/plans/2026-07-31-desk-pet.md` — 구현 계획 (어떻게 만드는지, Task 1~13, 체크박스로 진행 추적)
+2. `docs/superpowers/plans/2026-07-31-desk-pet.md` — 구현 계획 (Task 1~13 전부 체크 완료)
+3. `README.md` — 사용법·빌드·배포 안내
 
-## 이어서 작업하는 방법
+## 알아두면 좋은 것
 
-1. 위 두 문서를 읽는다
-2. superpowers의 **subagent-driven-development** 또는 **executing-plans** 스킬로 계획을 Task 1부터 순서대로 실행한다 (superpowers 플러그인이 없는 환경이면 계획 문서만 따라가도 됨 — 모든 코드가 계획에 들어 있다)
-3. 각 Task의 체크박스(`- [ ]`)를 완료할 때마다 체크하고 커밋한다
-4. 완료된 Task는 계획 문서에서 체크 상태로 확인 가능
+- 실행: `npm start` / 테스트: `npm test` / 빌드: `npm run icons` 후 `npm run dist:win`
+- Windows에서 빌드 시 winCodeSign 심볼릭 링크 오류가 나면: 캐시(`%LOCALAPPDATA%\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0`)에 7z를 수동으로 풀어두면 해결됨 (darwin 심볼릭 링크 2건 오류는 무시해도 됨). 이 기기에는 이미 적용됨.
+- 설정·일과 데이터는 `%APPDATA%\baepsae-deskpet\config.json`에 저장됨
 
 ## 확정된 주요 결정 (재논의 불필요)
 

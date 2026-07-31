@@ -46,10 +46,20 @@ function create2DPlayer(cfg, baseUrl) {
       down2 = { x: e.screenX, y: e.screenY };
     }
   };
+  let lastClickAt2 = 0;
   const onUp = () => {
     if (!down2) return;
     if (dragging) window.api.send('drag-end');
-    else window.api.send('pet-click');
+    else {
+      const tNow = performance.now();
+      if (tNow - lastClickAt2 < 450) {
+        lastClickAt2 = 0;
+        window.api.send('pet-dblclick');
+      } else {
+        lastClickAt2 = tNow;
+        window.api.send('pet-click');
+      }
+    }
     down2 = null;
     dragging = false;
   };
@@ -96,13 +106,24 @@ async function create3DPlayer(baseUrl) {
       else if (a.type === 'move') window.api.send('drag-move', { dx: a.dx, dy: a.dy });
     }
   };
+  // 더블클릭은 직접 감지한다 — 로밍 중엔 창이 움직여서 OS의 더블클릭 판정(같은 위치 조건)이 실패함
+  let lastClickAt = 0;
   const onUp = () => {
     clearTimeout(longTimer);
     const r = up(g, now());
     g = r.g;
     for (const a of r.actions) {
-      if (a.type === 'click') window.api.send('pet-click');
-      else if (a.type === 'move-end') window.api.send('drag-end');
+      if (a.type === 'click') {
+        const tNow = now();
+        if (tNow - lastClickAt < 450) {
+          lastClickAt = 0;
+          if (bird.isRotated()) bird.resetRotation();
+          else window.api.send('pet-dblclick');
+        } else {
+          lastClickAt = tNow;
+          window.api.send('pet-click');
+        }
+      } else if (a.type === 'move-end') window.api.send('drag-end');
       else if (a.type === 'rotate-end') bird.endRotate();
     }
   };
@@ -168,11 +189,6 @@ window.api.on('say', ({ text, ms }) => {
 
 window.api.on('character-changed', () => init());
 
-document.addEventListener('dblclick', () => {
-  // 돌려둔 상태면 더블클릭 = 정면 복귀, 정면이면 = 일과 완료
-  if (player?.isRotated?.()) player.resetRotation();
-  else window.api.send('pet-dblclick');
-});
 document.addEventListener('contextmenu', (e) => {
   e.preventDefault();
   window.api.send('pet-context');

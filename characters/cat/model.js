@@ -18,8 +18,8 @@ export function createModel(container) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 50);
-  camera.position.set(0, 0.3, 7.0);
-  camera.lookAt(0, -0.1, 0);
+  camera.position.set(0, 0.35, 7.6);
+  camera.lookAt(0, -0.05, 0);
 
   scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd8c8b8, 2.6));
   const key = new THREE.DirectionalLight(0xfff4e6, 1.6);
@@ -99,13 +99,15 @@ export function createModel(container) {
       let y = pos.getY(i);
       let z = pos.getZ(i);
       const ny = y / 1.25;
-      y *= 1.08;
-      const below = Math.max(0, 0.2 - ny);
-      const w = 1 + 0.24 * Math.pow(below / 1.2, 0.9); // 아래로 갈수록 통통
-      x *= w;
-      z *= w;
-      const cheekBand = Math.exp(-Math.pow((ny - 0.1) / 0.32, 2));
-      x *= 1 + 0.08 * cheekBand; // 볼 살짝
+      y *= 1.3; // 앉은 고양이처럼 세로로 길게
+      // 위쪽은 작고 동그란 머리, 목에서 잘록, 아래로 엉덩이가 넓어지는 실루엣
+      const headness = Math.min(1, Math.max(0, (ny - 0.18) / 0.2));
+      const bodyWiden = 1 + 0.28 * Math.pow(Math.max(0, 0.2 - ny) / 1.2, 0.9);
+      const s = bodyWiden * (1 - 0.17 * headness);
+      x *= s;
+      z *= s;
+      const cheekBand = Math.exp(-Math.pow((ny - 0.45) / 0.18, 2));
+      x *= 1 + 0.09 * cheekBand; // 머리 옆 볼살
       if (z > 0) z += 0.07 * Math.pow(Math.max(0, -ny), 1.3) * (z / 1.25);
       const h = Math.sin(x * 38.3 + y * 24.7) * Math.cos(z * 29.9 - y * 17.3);
       const amp = 0.014 * h;
@@ -133,7 +135,7 @@ export function createModel(container) {
     const inner = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.32, 10), pinkMat);
     inner.position.set(0, -0.04, 0.1);
     ear.add(outer, inner);
-    ear.position.set(0.55 * sign, 1.38, 0.05);
+    ear.position.set(0.44 * sign, 1.58, 0.05);
     ear.rotation.z = -0.22 * sign;
     pet.add(ear);
     ears.push(ear);
@@ -157,7 +159,7 @@ export function createModel(container) {
     );
     shine2.position.set(0.045 * sign, -0.035, 0.115);
     eye.add(ball, shine1, shine2);
-    eye.position.set(0.38 * sign, 0.42, 1.05);
+    eye.position.set(0.32 * sign, 0.82, 0.87);
     return eye;
   }
   const eyeL = makeEye(-1);
@@ -165,15 +167,15 @@ export function createModel(container) {
   pet.add(eyeL, eyeR);
 
   // ---------- 주둥이: 흰 뭉툭 + 분홍 코 + 수염 ----------
-  const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.26, 24, 18), white);
-  muzzle.scale.set(1.2, 0.75, 0.55);
-  muzzle.position.set(0, 0.12, 1.1);
+  const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 18), white);
+  muzzle.scale.set(1.2, 0.72, 0.5);
+  muzzle.position.set(0, 0.56, 0.88);
   pet.add(muzzle);
 
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.09, 4), pinkMat);
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.08, 4), pinkMat);
   nose.rotation.x = Math.PI; // 아래로 향한 세모코
   nose.rotation.y = Math.PI / 4;
-  nose.position.set(0, 0.28, 1.26);
+  nose.position.set(0, 0.68, 1.02);
   pet.add(nose);
 
   const whiskerMat = new THREE.MeshBasicMaterial({ color: 0xfdf8f0, transparent: true, opacity: 0.85 });
@@ -185,7 +187,7 @@ export function createModel(container) {
     ]) {
       const wsk = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.46, 6), whiskerMat);
       wsk.rotation.z = Math.PI / 2 + rot * sign;
-      wsk.position.set(0.4 * sign, 0.14 + dy, 1.12);
+      wsk.position.set(0.38 * sign, 0.58 + dy, 0.92);
       pet.add(wsk);
     }
   }
@@ -195,7 +197,7 @@ export function createModel(container) {
   for (const sign of [-1, 1]) {
     const paw = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), white);
     paw.scale.set(1, 0.6, 1.3);
-    paw.position.set(0.3 * sign, -1.28, 0.62);
+    paw.position.set(0.28 * sign, -1.52, 0.5);
     pet.add(paw);
     paws.push(paw);
   }
@@ -204,12 +206,12 @@ export function createModel(container) {
   const tail = new THREE.Group();
   {
     const pts = [
-      [0.15, -1.0, -1.0],
-      [0.55, -0.85, -1.2],
-      [0.9, -0.5, -1.25],
-      [1.05, -0.1, -1.15],
-      [1.05, 0.3, -1.0],
-      [0.95, 0.62, -0.9],
+      [0.15, -1.25, -1.0],
+      [0.55, -1.05, -1.2],
+      [0.9, -0.65, -1.25],
+      [1.05, -0.2, -1.15],
+      [1.05, 0.25, -1.0],
+      [0.95, 0.6, -0.9],
     ];
     pts.forEach(([x, y, z], i) => {
       const r = 0.17 - i * 0.012;
@@ -256,7 +258,7 @@ export function createModel(container) {
     tapR.position.set(0.24, 0.12, -0.05);
     laptop.add(base, keys, screen, glow, logo, tapL, tapR);
   }
-  laptop.position.set(0, -1.2, 1.12);
+  laptop.position.set(0, -1.42, 1.05);
   laptop.scale.setScalar(1.05);
   laptop.visible = false;
   pet.add(laptop);

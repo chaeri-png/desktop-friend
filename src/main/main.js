@@ -18,6 +18,20 @@ function loadCharacter(name) {
 
 ipcMain.handle('get-character', () => loadCharacter(characterName));
 
+export function say(text, ms = 4000) {
+  petWin?.webContents.send('say', { text, ms });
+}
+
+ipcMain.on('drag-move', (_e, { dx, dy }) => {
+  if (!petWin) return;
+  const [x, y] = petWin.getPosition();
+  petWin.setPosition(x + dx, y + dy);
+});
+
+ipcMain.on('pet-click', () => {
+  say('안녕! 🐦', 2000);
+});
+
 app.whenReady().then(() => {
   petWin = createPetWindow();
 });

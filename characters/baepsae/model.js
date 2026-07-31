@@ -78,10 +78,13 @@ export function createModel(container) {
       }
     }
 
+    // 정수리 옆 굵은 검은 줄무늬 — 진하고 길게, 눈 위에서 뒤통수까지 이어지게
+    ctx.filter = 'blur(7px)';
+    blob(0.1, 0.13, 0.13, 0.07, 0.45, 'rgba(30,26,23,1)');
+    blob(0.4, 0.13, 0.13, 0.07, -0.45, 'rgba(30,26,23,1)');
+    blob(0.02, 0.19, 0.12, 0.062, 0.2, 'rgba(30,26,23,1)');
+    blob(0.48, 0.19, 0.12, 0.062, -0.2, 'rgba(30,26,23,1)');
     ctx.filter = 'blur(12px)';
-    // 정수리 옆 굵은 검은 줄무늬 (눈 위 → 뒤통수로 갈수록 살짝 처짐)
-    blob(0.11, 0.15, 0.115, 0.058, 0.35, 'rgba(36,30,26,0.95)');
-    blob(0.39, 0.15, 0.115, 0.058, -0.35, 'rgba(36,30,26,0.95)');
     // 볼터치 (정면 양옆, 은은하게)
     blob(0.175, 0.3, 0.042, 0.028, 0, 'rgba(242,178,164,0.42)');
     blob(0.325, 0.3, 0.042, 0.028, 0, 'rgba(242,178,164,0.42)');
@@ -156,11 +159,13 @@ export function createModel(container) {
   bird.add(eyeL, eyeR);
 
   // ---------- 부리: 아주 작고 뭉툭한 세모 ----------
+  // 4각뿔 부리 — 정면에선 마름모, 옆에선 뾰족한 삼각형
   const beak = new THREE.Mesh(
-    new THREE.ConeGeometry(0.11, 0.26, 16),
-    new THREE.MeshStandardMaterial({ color: 0x1d1815, roughness: 0.5 })
+    new THREE.ConeGeometry(0.12, 0.28, 4),
+    new THREE.MeshStandardMaterial({ color: 0x1d1815, roughness: 0.5, flatShading: true })
   );
-  beak.rotation.x = Math.PI / 2 - 0.3; // 살짝 아래를 향해 정면에서도 또렷하게
+  beak.rotation.x = Math.PI / 2 - 0.25;
+  beak.scale.set(1.15, 1, 0.7); // 좌우로 넓고 위아래로 납작하게
   beak.position.set(0, 0.38, 1.24);
   bird.add(beak);
 

@@ -183,6 +183,7 @@ ipcMain.on('drag-end', () => {
 ipcMain.on('pet-click', () => {
   if (state.pet.state !== 'idle') return;
   state.pet = SM.send(state.pet, 'CLICK');
+  say('안녕! 🐦', 2000);
   pushView();
   setTimeout(() => {
     state.pet = SM.send(state.pet, 'REACT_END');

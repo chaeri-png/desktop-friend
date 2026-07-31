@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { NAG_MESSAGES, shouldNag, pickMessage } from '../src/shared/nagger.js';
+import { NAG_MESSAGES, GREET_MESSAGES, shouldNag, pickMessage, pickFrom } from '../src/shared/nagger.js';
 
 const MIN = 60_000;
 
@@ -17,5 +17,11 @@ describe('nagger', () => {
     expect(NAG_MESSAGES.length).toBeGreaterThanOrEqual(5);
     expect(NAG_MESSAGES).toContain(pickMessage(() => 0));
     expect(NAG_MESSAGES).toContain(pickMessage(() => 0.999));
+  });
+
+  it('인사말도 목록 안에서 고른다', () => {
+    expect(GREET_MESSAGES.length).toBeGreaterThanOrEqual(8);
+    expect(GREET_MESSAGES).toContain(pickFrom(GREET_MESSAGES, () => 0));
+    expect(GREET_MESSAGES).toContain(pickFrom(GREET_MESSAGES, () => 0.999));
   });
 });

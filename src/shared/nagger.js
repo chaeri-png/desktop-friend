@@ -8,10 +8,29 @@ export const NAG_MESSAGES = [
   '잠깐 일어나서 한 바퀴 돌고 와요!',
 ];
 
+// 클릭 인사말 (랜덤)
+export const GREET_MESSAGES = [
+  '안녕! {emoji}',
+  '불렀어요? 👀',
+  '오늘도 화이팅이에요!',
+  '{name}가 응원할게요! 💪',
+  '히히, 간지러워요~',
+  '무슨 일이에요? 🐾',
+  '보고 싶었어요! {emoji}',
+  '쓰담쓰담 고마워요~',
+  '집중 잘 되고 있어요?',
+  '옆에 있을게요, 힘내요!',
+  '{emoji} 뿅!',
+];
+
 export function shouldNag({ enabled, lastAt, intervalMin, now }) {
   return enabled && now - lastAt >= intervalMin * 60_000;
 }
 
+export function pickFrom(list, rand = Math.random) {
+  return list[Math.floor(rand() * list.length)];
+}
+
 export function pickMessage(rand = Math.random) {
-  return NAG_MESSAGES[Math.floor(rand() * NAG_MESSAGES.length)];
+  return pickFrom(NAG_MESSAGES, rand);
 }

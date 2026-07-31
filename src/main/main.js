@@ -7,7 +7,7 @@ import * as T from '../shared/timer.js';
 import * as SM from '../shared/stateMachine.js';
 import * as ST from '../shared/store.js';
 import * as SC from '../shared/schedule.js';
-import { shouldNag, pickMessage } from '../shared/nagger.js';
+import { shouldNag, pickMessage, pickFrom, GREET_MESSAGES } from '../shared/nagger.js';
 import { createTray } from './tray.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -208,7 +208,8 @@ ipcMain.on('drag-end', () => {
 ipcMain.on('pet-click', () => {
   if (state.pet.state !== 'idle') return;
   state.pet = SM.send(state.pet, 'CLICK');
-  say(`안녕! ${charInfo().emoji}`, 2000);
+  const info = charInfo();
+  say(pickFrom(GREET_MESSAGES).replaceAll('{name}', info.name).replaceAll('{emoji}', info.emoji), 2500);
   pushView();
   setTimeout(() => {
     state.pet = SM.send(state.pet, 'REACT_END');

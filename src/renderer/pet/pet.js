@@ -114,6 +114,8 @@ async function create3DPlayer(baseUrl) {
     setAnimation: bird.setAnimation,
     rotateBy: bird.rotateBy,
     endRotate: bird.endRotate,
+    isRotated: bird.isRotated,
+    resetRotation: bird.resetRotation,
     dispose() {
       clearTimeout(longTimer);
       stage.removeEventListener('mousedown', onDown);
@@ -166,7 +168,11 @@ window.api.on('say', ({ text, ms }) => {
 
 window.api.on('character-changed', () => init());
 
-document.addEventListener('dblclick', () => window.api.send('pet-dblclick'));
+document.addEventListener('dblclick', () => {
+  // 돌려둔 상태면 더블클릭 = 정면 복귀, 정면이면 = 일과 완료
+  if (player?.isRotated?.()) player.resetRotation();
+  else window.api.send('pet-dblclick');
+});
 document.addEventListener('contextmenu', (e) => {
   e.preventDefault();
   window.api.send('pet-context');
@@ -185,7 +191,7 @@ window.api.on('debug-snaps', () => {
   setTimeout(() => snap('2-side'), 600);
   setTimeout(() => player?.rotateBy?.(79, 0), 800);
   setTimeout(() => snap('3-back'), 1200);
-  setTimeout(() => player?.endRotate?.(), 1400);
+  setTimeout(() => { player?.endRotate?.(); player?.resetRotation?.(); }, 1400);
   setTimeout(() => player?.setAnimation?.('focus'), 3600);
   setTimeout(() => snap('4-focus'), 3800);
   setTimeout(() => player?.setAnimation?.('idle'), 3950);

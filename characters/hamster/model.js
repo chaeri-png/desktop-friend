@@ -278,7 +278,7 @@ export function createModel(container) {
   let userYaw = 0;
   let userPitch = 0;
   let rotating = false;
-  let releasedAt = 0;
+  let returning = false; // 더블클릭 정면 복귀 중
   const clock = new THREE.Clock();
   let disposed = false;
 
@@ -297,13 +297,25 @@ export function createModel(container) {
 
   function rotateBy(dx, dy) {
     rotating = true;
+    returning = false;
     userYaw += dx * 0.02;
     userPitch = Math.max(-0.7, Math.min(0.7, userPitch + dy * 0.012));
   }
 
   function endRotate() {
     rotating = false;
-    releasedAt = t;
+    // 돌려둔 각도는 그대로 고정. 복귀가 최단 경로가 되도록 각도만 정리
+    userYaw = userYaw % (Math.PI * 2);
+    if (userYaw > Math.PI) userYaw -= Math.PI * 2;
+    if (userYaw < -Math.PI) userYaw += Math.PI * 2;
+  }
+
+  function isRotated() {
+    return Math.abs(userYaw) > 0.15 || Math.abs(userPitch) > 0.1;
+  }
+
+  function resetRotation() {
+    returning = true; // 천천히 정면으로
   }
 
   function frame() {
@@ -377,9 +389,14 @@ export function createModel(container) {
       tapR.position.y = 0.1 + Math.max(0, Math.sin(t * 11 + Math.PI)) * 0.08;
     }
 
-    if (!rotating && t - releasedAt > 0.8) {
-      userYaw *= Math.max(0, 1 - dt * 3);
-      userPitch *= Math.max(0, 1 - dt * 3);
+    if (returning) {
+      userYaw *= Math.max(0, 1 - dt * 5);
+      userPitch *= Math.max(0, 1 - dt * 5);
+      if (Math.abs(userYaw) < 0.01 && Math.abs(userPitch) < 0.01) {
+        userYaw = 0;
+        userPitch = 0;
+        returning = false;
+      }
     }
     pivot.rotation.y = userYaw;
     pivot.rotation.x = userPitch;
@@ -392,6 +409,8 @@ export function createModel(container) {
     setAnimation,
     rotateBy,
     endRotate,
+    isRotated,
+    resetRotation,
     dispose() {
       disposed = true;
       renderer.dispose();

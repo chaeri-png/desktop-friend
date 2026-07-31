@@ -37,13 +37,17 @@ function loadCharacter(name) {
   return { config, baseUrl: `app://root/characters/${name}` };
 }
 
-// 현재 캐릭터의 이름·이모지 (말풍선 문구용)
+// 현재 캐릭터의 이름·이모지·전용 대사 (말풍선 문구용)
 function charInfo() {
   try {
     const { config } = loadCharacter(state.store.character);
-    return { name: config.displayName ?? '펫', emoji: config.emoji ?? '✨' };
+    return {
+      name: config.displayName ?? '펫',
+      emoji: config.emoji ?? '✨',
+      lines: Array.isArray(config.lines) ? config.lines : [],
+    };
   } catch {
-    return { name: '펫', emoji: '✨' };
+    return { name: '펫', emoji: '✨', lines: [] };
   }
 }
 ipcMain.handle('get-character', () => loadCharacter(state.store.character));
@@ -209,7 +213,9 @@ ipcMain.on('pet-click', () => {
   if (state.pet.state !== 'idle') return;
   state.pet = SM.send(state.pet, 'CLICK');
   const info = charInfo();
-  say(pickFrom(GREET_MESSAGES).replaceAll('{name}', info.name).replaceAll('{emoji}', info.emoji), 2500);
+  // 캐릭터 전용 대사가 있으면 그걸, 없으면 공용 인사말
+  const pool = info.lines.length ? info.lines : GREET_MESSAGES;
+  say(pickFrom(pool).replaceAll('{name}', info.name).replaceAll('{emoji}', info.emoji), 3500);
   pushView();
   setTimeout(() => {
     state.pet = SM.send(state.pet, 'REACT_END');

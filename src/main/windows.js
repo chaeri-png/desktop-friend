@@ -21,7 +21,7 @@ export function createPetWindow() {
     hasShadow: false,
     webPreferences: { preload: path.join(__dirname, 'preload.cjs') },
   });
-  win.loadFile(path.join(__dirname, '../renderer/pet/pet.html'));
+  win.loadURL('app://root/src/renderer/pet/pet.html');
   // 개발 중에만: 펫 창 콘솔 메시지를 터미널로 전달 (렌더러 오류 확인용)
   if (!app.isPackaged) {
     win.webContents.on('console-message', (_e, _level, message) => {
@@ -39,6 +39,6 @@ export function createSettingsWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.cjs') },
   });
   win.setMenuBarVisibility(false);
-  win.loadFile(path.join(__dirname, '../renderer/settings/settings.html'));
+  win.loadURL('app://root/src/renderer/settings/settings.html');
   return win;
 }

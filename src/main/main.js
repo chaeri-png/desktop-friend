@@ -1,4 +1,4 @@
-import { app, ipcMain, screen, Notification, Menu } from 'electron';
+import { app, ipcMain, screen, Notification, Menu, protocol, net } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -11,7 +11,13 @@ import { shouldNag, pickMessage } from '../shared/nagger.js';
 import { createTray } from './tray.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CHARACTERS_DIR = path.join(__dirname, '../../characters');
+const ROOT = path.normalize(path.join(__dirname, '../..'));
+const CHARACTERS_DIR = path.join(ROOT, 'characters');
+
+// file://에서는 외부 ES 모듈이 CORS로 차단되므로 앱 전용 프로토콜로 파일을 서빙한다
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } },
+]);
 const CONFIG_FILE = () => path.join(app.getPath('userData'), 'config.json');
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
@@ -28,7 +34,7 @@ const state = {
 function loadCharacter(name) {
   const dir = path.join(CHARACTERS_DIR, name);
   const config = JSON.parse(fs.readFileSync(path.join(dir, 'character.json'), 'utf8'));
-  return { config, baseUrl: pathToFileURL(dir).href };
+  return { config, baseUrl: `app://root/characters/${name}` };
 }
 ipcMain.handle('get-character', () => loadCharacter(state.store.character));
 
@@ -266,6 +272,12 @@ function tick() {
 
 // ---------- 시작 ----------
 app.whenReady().then(() => {
+  protocol.handle('app', (req) => {
+    const { pathname } = new URL(req.url);
+    const filePath = path.normalize(path.join(ROOT, decodeURIComponent(pathname)));
+    if (!filePath.startsWith(ROOT)) return new Response('forbidden', { status: 403 });
+    return net.fetch(pathToFileURL(filePath).href);
+  });
   state.store = ST.rolloverIfNewDay(ST.load(CONFIG_FILE()), todayStr());
   ST.save(CONFIG_FILE(), state.store);
   state.timer = T.createTimer({

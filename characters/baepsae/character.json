@@ -1,0 +1,13 @@
+{
+  "name": "baepsae",
+  "displayName": "뱁새",
+  "animations": {
+    "idle":    { "frames": ["idle.svg", "idle.svg", "idle.svg", "blink.svg"], "intervalMs": 700 },
+    "idleFun": { "frames": ["dance1.svg", "dance2.svg"], "intervalMs": 400 },
+    "focus":   { "frames": ["focus.svg", "focus.svg", "focus2.svg"], "intervalMs": 900 },
+    "rest":    { "frames": ["dance1.svg", "dance2.svg"], "intervalMs": 350 },
+    "drag":    { "frames": ["drag.svg"], "intervalMs": 500 },
+    "react":   { "frames": ["happy.svg"], "intervalMs": 500 },
+    "cheer":   { "frames": ["happy.svg", "dance1.svg", "happy.svg", "dance2.svg"], "intervalMs": 300 }
+  }
+}

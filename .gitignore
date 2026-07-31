@@ -1,0 +1,4 @@
+node_modules/
+release/
+assets/tray.png
+build/icon.png

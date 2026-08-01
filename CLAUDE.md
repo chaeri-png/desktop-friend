@@ -13,7 +13,8 @@
   - 더블클릭: ①돌려둔 상태면 정면 복귀 ②휴식 로밍 중이면 제자리 복귀 ③그 외엔 현재 일과 완료
   - 집중 중엔 노트북 타이핑, 휴식 시작·사이클 완료 때 "야호" 환호(3초) 후 춤
   - `character.json`의 `"type": "3d"`로 3D/2D 분기 (2D 캐릭터 팩은 기존 방식 그대로 동작)
-  - 3D 캐릭터 팩 = `characters/<이름>/character.json` + `model.js` (`createModel(container)` export). 현재 뱁새·햄스터 2종
+  - 3D 캐릭터 팩 = `characters/<이름>/character.json` + `model.js` (`createModel(container)` export). 현재 3종: 뱁새(과묵·다정·헤드셋), 햄스터(발랄·응원), 치즈냥(시크·츤데레·두 발로 섬)
+  - 대사는 character.json의 `lines` — `{any, morning, lunch, afternoon, evening, night}` 시간대별 구조, `{name}`·`{emoji}` 치환 지원
   - 모델 확인용 스냅샷: `BAEPSAE_SNAP=1`로 실행하면 정면/옆/뒷모습 PNG가 프로젝트 루트에 저장됨
   - three.js는 `src/renderer/vendor/three.module.js`로 벤더링(번들러 없음)
 - 남은 확인: Windows에서 눈으로 직접 동작 확인, 설치 파일 재빌드(`npm run icons` 후 `npm run dist:win` — 현재 exe는 2D 시절 빌드), Mac 팀원 기기에서 `npm run dist:mac` 빌드

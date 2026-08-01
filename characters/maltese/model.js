@@ -119,8 +119,8 @@ export function createModel(container) {
       const pos = earGeo.attributes.position;
       for (let i = 0; i < pos.count; i++) {
         const ny = pos.getY(i) / 0.3;
-        const widen = 1 + 0.55 * Math.max(0, -ny); // 아래는 넓게
-        const taper = 1 - 0.45 * Math.max(0, ny); // 위는 좁게
+        const widen = 1 + 0.4 * Math.max(0, ny); // 위(붙는 곳)는 넓게
+        const taper = 1 - 0.6 * Math.max(0, -ny); // 아래 끝은 뾰족하게
         pos.setX(i, pos.getX(i) * widen * taper);
         pos.setZ(i, pos.getZ(i) * widen * taper);
       }

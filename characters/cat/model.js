@@ -240,14 +240,6 @@ export function createModel(container) {
   body.position.set(0, -0.55, 0);
   pet.add(body);
 
-  // 가슴 솜털 뭉치
-  const chestFluffGeo = new THREE.SphereGeometry(0.24, 20, 14);
-  fluff(chestFluffGeo, 0.045);
-  const chestFluff = new THREE.Mesh(chestFluffGeo, white);
-  chestFluff.scale.set(1.2, 0.8, 0.55);
-  chestFluff.position.set(0, 0.02, 0.62);
-  pet.add(chestFluff);
-
   // ---------- 팔: 배 앞에 모은 손 ----------
   for (const sign of [-1, 1]) {
     const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.4, 6, 12), cheese);

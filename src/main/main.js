@@ -61,8 +61,8 @@ ipcMain.on('debug-snap', (_e, { name, data }) => {
 });
 
 // ---------- 말풍선·알림 ----------
-export function say(text, ms = 4000) {
-  petWin?.webContents.send('say', { text, ms });
+export function say(text, ms = 4000, thought = false) {
+  petWin?.webContents.send('say', { text, ms, thought });
 }
 function notify(title, body) {
   new Notification({ title, body }).show();
@@ -215,8 +215,11 @@ ipcMain.on('pet-click', () => {
   const info = charInfo();
   // 캐릭터 전용 대사(공통 + 현재 시간대)가 있으면 그걸, 없으면 공용 인사말
   const pool = linesForHour(info.lines, new Date().getHours());
-  const line = pickFrom(pool.length ? pool : GREET_MESSAGES);
-  say(line.replaceAll('{name}', info.name).replaceAll('{emoji}', info.emoji), 3500);
+  let line = pickFrom(pool.length ? pool : GREET_MESSAGES);
+  // "t:" 로 시작하는 대사는 말풍선 대신 생각 풍선(혼잣말)
+  const thought = line.startsWith('t:');
+  if (thought) line = line.slice(2);
+  say(line.replaceAll('{name}', info.name).replaceAll('{emoji}', info.emoji), 3500, thought);
   pushView();
   setTimeout(() => {
     state.pet = SM.send(state.pet, 'REACT_END');

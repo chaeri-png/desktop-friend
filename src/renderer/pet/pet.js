@@ -180,8 +180,9 @@ window.api.on('view', (v) => {
 });
 
 let bubbleTimer = null;
-window.api.on('say', ({ text, ms }) => {
-  bubble.textContent = text;
+window.api.on('say', ({ text, ms, thought }) => {
+  bubble.textContent = thought ? `( ${text} )` : text;
+  bubble.classList.toggle('thought', !!thought);
   bubble.hidden = false;
   clearTimeout(bubbleTimer);
   bubbleTimer = setTimeout(() => { bubble.hidden = true; }, ms);

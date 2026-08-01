@@ -117,9 +117,9 @@ export function createModel(container) {
     const earGeo = new THREE.SphereGeometry(0.32, 20, 16);
     fluff(earGeo, 0.045);
     const ear = new THREE.Mesh(earGeo, cream);
-    ear.scale.set(0.62, 1.4, 0.55);
-    ear.position.set(0.98 * sign, 0.58, 0.0); // 머리 실루엣 바깥으로 확실히
-    ear.rotation.z = -0.32 * sign; // 위는 머리에 붙고 아래로 갈수록 살짝 벌어지게
+    ear.scale.set(0.6, 1.35, 0.55);
+    ear.position.set(0.9 * sign, 0.28, 0.0); // 볼 옆으로 축 늘어지게 (아래로)
+    ear.rotation.z = -0.08 * sign;
     headGroup.add(ear);
     ears.push(ear);
   }

@@ -35,7 +35,7 @@ export function createModel(container) {
   scene.add(pivot);
 
   const furWhite = new THREE.MeshStandardMaterial({ color: 0xfdfaf3, roughness: 1 });
-  const cream = new THREE.MeshStandardMaterial({ color: 0xeee1c8, roughness: 1 });
+  const cream = new THREE.MeshStandardMaterial({ color: 0xf2ecdf, roughness: 1 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x26201c, roughness: 0.4 });
   const pinkMat = new THREE.MeshStandardMaterial({ color: 0xf0a0a0, roughness: 0.8 });
 
@@ -92,9 +92,9 @@ export function createModel(container) {
     ctx.fillStyle = '#fdfaf3';
     ctx.fillRect(0, 0, S, S);
     fur(ctx, S, 0.12);
-    ctx.filter = 'blur(7px)';
-    blobOn(ctx, S, 0.15, 0.55, 0.05, 0.033, 0, 'rgba(244,178,168,0.4)');
-    blobOn(ctx, S, 0.35, 0.55, 0.05, 0.033, 0, 'rgba(244,178,168,0.4)');
+    ctx.filter = 'blur(8px)';
+    blobOn(ctx, S, 0.15, 0.55, 0.045, 0.03, 0, 'rgba(244,178,168,0.3)');
+    blobOn(ctx, S, 0.35, 0.55, 0.045, 0.03, 0, 'rgba(244,178,168,0.3)');
     ctx.filter = 'none';
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -164,14 +164,23 @@ export function createModel(container) {
   const muzzleGeo = new THREE.SphereGeometry(0.24, 24, 18);
   fluff(muzzleGeo, 0.035);
   const muzzle = new THREE.Mesh(muzzleGeo, furWhite);
-  muzzle.scale.set(1.05, 0.72, 0.55);
+  muzzle.scale.set(1.1, 0.76, 0.55);
   muzzle.position.set(0, 0.26, 0.87);
   headGroup.add(muzzle);
 
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.095, 16, 12), dark);
-  nose.scale.set(1.15, 0.85, 0.8);
-  nose.position.set(0, 0.38, 1.0);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.105, 16, 12), dark);
+  nose.scale.set(1.2, 0.9, 0.8);
+  nose.position.set(0, 0.37, 1.0);
   headGroup.add(nose);
+
+  // 분홍 혀 살짝 (참고 사진 2)
+  const tongue = new THREE.Mesh(
+    new THREE.SphereGeometry(0.07, 14, 10),
+    new THREE.MeshStandardMaterial({ color: 0xef9aa2, roughness: 0.8 })
+  );
+  tongue.scale.set(0.9, 0.45, 0.5);
+  tongue.position.set(0, 0.2, 0.99);
+  headGroup.add(tongue);
 
   // ω 입 (앙 다문 입)
   const mouthMat = new THREE.MeshBasicMaterial({ color: 0x7a6552 });
@@ -218,7 +227,7 @@ export function createModel(container) {
       pos.setXYZ(i, x, y, z);
     }
   }
-  fluff(bodyGeo, 0.024);
+  fluff(bodyGeo, 0.028);
   const body = new THREE.Mesh(
     bodyGeo,
     new THREE.MeshStandardMaterial({ map: makeBodyTexture(), roughness: 1 })

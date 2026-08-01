@@ -102,12 +102,12 @@ export function createModel(container) {
     return tex;
   }
   const headGeo = new THREE.SphereGeometry(0.88, 48, 36);
-  fluff(headGeo, 0.028); // 복슬하되 양털처럼 과하지 않게
+  fluff(headGeo, 0.032); // 가장자리 부스스한 퍼피컷
   const head = new THREE.Mesh(
     headGeo,
     new THREE.MeshStandardMaterial({ map: makeHeadTexture(), roughness: 1 })
   );
-  head.scale.set(1.08, 0.98, 0.95);
+  head.scale.set(1.13, 0.94, 0.95); // 사진처럼 옆으로 넓고 살짝 낮은 돔
   head.position.set(0, 0.47, 0.05);
   headGroup.add(head);
 
@@ -128,9 +128,9 @@ export function createModel(container) {
     }
     fluff(earGeo, 0.04);
     const ear = new THREE.Mesh(earGeo, cream);
-    ear.scale.set(0.8, 1.75, 0.45);
-    ear.position.set(0.9 * sign, 0.42, 0.16);
-    ear.rotation.set(Math.PI, 0, -0.28 * sign); // 위아래 180도 뒤집기
+    ear.scale.set(0.95, 1.55, 0.55); // 짧고 넓고 도톰하게
+    ear.position.set(0.98 * sign, 0.5, 0.14); // 옆으로 발랄하게 벌어지게
+    ear.rotation.set(Math.PI, 0, -0.42 * sign);
     headGroup.add(ear);
     ears.push(ear);
   }

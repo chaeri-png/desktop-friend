@@ -1,0 +1,463 @@
+// 프렌치 불독 '테리' 3D — 두 발로 선 다부진 프렌치
+// 눈 위까지 까만 머리 + 아래는 하얀색, 쫑긋 선 박쥐 귀, 납작 얼굴,
+// 넓적한 코, 주걱턱 아랫니, 매끈한 짧은 털, 꽁지 스텁
+import * as THREE from '../../src/renderer/vendor/three.module.js';
+
+export function createModel(container) {
+  const W = container.clientWidth || 150;
+  const H = container.clientHeight || 170;
+
+  const renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+    preserveDrawingBuffer: true,
+  });
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  renderer.setSize(W, H);
+  container.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 50);
+  camera.position.set(0, 0.3, 7.8);
+  camera.lookAt(0, -0.05, 0);
+
+  scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd8cfc4, 2.6));
+  const key = new THREE.DirectionalLight(0xfff4e6, 1.6);
+  key.position.set(2, 4, 5);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffffff, 1.9);
+  rim.position.set(-1.5, 3, -4);
+  scene.add(rim);
+
+  const pivot = new THREE.Group();
+  const pet = new THREE.Group();
+  pivot.add(pet);
+  scene.add(pivot);
+
+  const white = new THREE.MeshStandardMaterial({ color: 0xfdfaf3, roughness: 0.95 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x2b2624, roughness: 0.9 });
+  const darkNose = new THREE.MeshStandardMaterial({ color: 0x1d1815, roughness: 0.4 });
+  const pinkMat = new THREE.MeshStandardMaterial({ color: 0xd9958f, roughness: 0.9 });
+
+  function blobOn(ctx, S, cx, cy, rx, ry, rot, fill) {
+    ctx.fillStyle = fill;
+    for (const off of [-1, 0, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(S * (cx + off), S * cy, S * rx, S * ry, rot, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 매끈한 짧은 털 — 아주 미세한 요철만
+  function fluff(geo, amp) {
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const h = Math.sin(x * 43.1 + y * 26.9) * Math.cos(z * 31.7 - y * 18.3);
+      const a = amp * h;
+      const len = Math.hypot(x, y, z) || 1;
+      pos.setXYZ(i, x + (x / len) * a, y + (y / len) * a, z + (z / len) * a);
+    }
+    geo.computeVertexNormals();
+  }
+
+  // ---------- 머리 그룹 ----------
+  const headGroup = new THREE.Group();
+  headGroup.position.set(0, 0.35, 0);
+  pet.add(headGroup);
+
+  // 머리 텍스처: 눈 위까지 까만색, 아래는 하얀색
+  function makeHeadTexture() {
+    const S = 512;
+    const cv = document.createElement('canvas');
+    cv.width = S;
+    cv.height = S;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fdfaf3';
+    ctx.fillRect(0, 0, S, S);
+    // 위쪽(정수리~눈 위) 까만 캡 — 경계는 부드럽게
+    ctx.filter = 'blur(9px)';
+    ctx.fillStyle = 'rgba(43,38,36,0.98)';
+    ctx.fillRect(-S, 0, S * 3, S * 0.3);
+    ctx.filter = 'none';
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
+  }
+  const headGeo = new THREE.SphereGeometry(0.9, 48, 36);
+  fluff(headGeo, 0.008);
+  const head = new THREE.Mesh(
+    headGeo,
+    new THREE.MeshStandardMaterial({ map: makeHeadTexture(), roughness: 0.95 })
+  );
+  head.scale.set(1.15, 0.92, 0.95); // 넓적하고 낮은 프렌치 두상
+  head.position.set(0, 0.45, 0.05);
+  headGroup.add(head);
+
+  // ---------- 귀: 쫑긋 선 큰 박쥐 귀 (까만색 + 분홍 속) ----------
+  const ears = [];
+  for (const sign of [-1, 1]) {
+    const ear = new THREE.Group();
+    const outerGeo = new THREE.SphereGeometry(0.34, 22, 16);
+    fluff(outerGeo, 0.01);
+    const outer = new THREE.Mesh(outerGeo, black);
+    outer.scale.set(0.75, 1.35, 0.4);
+    const inner = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 14), pinkMat);
+    inner.scale.set(0.65, 1.15, 0.3);
+    inner.position.set(0, -0.03, 0.09);
+    ear.add(outer, inner);
+    ear.position.set(0.56 * sign, 1.32, 0.0);
+    ear.rotation.z = -0.18 * sign; // 살짝 바깥으로 벌어진 박쥐 귀
+    headGroup.add(ear);
+    ears.push(ear);
+  }
+
+  // ---------- 눈: 벌어진 동그란 눈 (까만 캡 경계 바로 아래) ----------
+  function makeEye(sign) {
+    const eye = new THREE.Group();
+    const ball = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 24, 18),
+      new THREE.MeshStandardMaterial({ color: 0x201612, roughness: 0.25 })
+    );
+    const shine1 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    shine1.position.set(-0.04 * sign, 0.05, 0.11);
+    const shine2 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.02, 10, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    shine2.position.set(0.045 * sign, -0.035, 0.115);
+    eye.add(ball, shine1, shine2);
+    eye.position.set(0.44 * sign, 0.5, 0.8); // 넓게 벌어진 눈
+    return eye;
+  }
+  const eyeL = makeEye(-1);
+  const eyeR = makeEye(1);
+  headGroup.add(eyeL, eyeR);
+
+  // ---------- 납작 주둥이 + 넓적한 코 + 주걱턱 아랫니 ----------
+  const muzzleGeo = new THREE.SphereGeometry(0.28, 24, 18);
+  fluff(muzzleGeo, 0.01);
+  const muzzle = new THREE.Mesh(muzzleGeo, white);
+  muzzle.scale.set(1.2, 0.75, 0.38);
+  muzzle.position.set(0, 0.24, 0.88);
+  headGroup.add(muzzle);
+
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), darkNose);
+  nose.scale.set(1.5, 0.8, 0.7); // 넓적한 들창코
+  nose.position.set(0, 0.42, 0.98);
+  headGroup.add(nose);
+
+  // ω 입
+  const mouthMat = new THREE.MeshBasicMaterial({ color: 0x6b5a50 });
+  for (const sign of [-1, 1]) {
+    const arc = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.013, 8, 18, Math.PI), mouthMat);
+    arc.rotation.z = Math.PI;
+    arc.position.set(0.055 * sign, 0.2, 1.0);
+    headGroup.add(arc);
+  }
+  // 주걱턱 아랫니 두 개 (프렌치 시그니처)
+  for (const sign of [-1, 1]) {
+    const tooth = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 0.06, 0.03),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    tooth.position.set(0.06 * sign, 0.14, 1.0);
+    headGroup.add(tooth);
+  }
+
+  // ---------- 몸통: 다부진 가슴, 매끈한 흰 몸 ----------
+  const bodyGeo = new THREE.SphereGeometry(0.85, 48, 32);
+  {
+    const pos = bodyGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i);
+      let y = pos.getY(i);
+      let z = pos.getZ(i);
+      const ny = y / 0.85;
+      x *= 0.98; // 프렌치답게 어깨 넓게
+      z *= 0.82;
+      y *= 1.0; // 짧고 다부지게
+      const chest = Math.exp(-Math.pow((ny - 0.25) / 0.4, 2));
+      if (z > 0) z += 0.1 * chest * (z / 0.85); // 가슴 근육 봉긋
+      const hip = Math.max(0, -ny);
+      x *= 1 + 0.06 * Math.pow(hip, 1.4);
+      pos.setXYZ(i, x, y, z);
+    }
+  }
+  fluff(bodyGeo, 0.008);
+  const body = new THREE.Mesh(bodyGeo, white);
+  body.position.set(0, -0.55, 0);
+  pet.add(body);
+
+  // ---------- 팔 (집중 땐 앞으로 뻗어 직접 타이핑) ----------
+  const armParts = [];
+  for (const sign of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.38, 6, 12), white);
+    pet.add(arm);
+    const paw = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), white);
+    pet.add(paw);
+    armParts.push({ arm, paw, sign });
+  }
+
+  // ---------- 다리 + 발 (짧고 튼튼) ----------
+  const legParts = [];
+  for (const sign of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.2, 6, 12), white);
+    leg.position.set(0.32 * sign, -1.3, 0.02);
+    pet.add(leg);
+    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), white);
+    foot.scale.set(1, 0.55, 1.4);
+    foot.rotation.y = 0.15 * sign;
+    pet.add(foot);
+    legParts.push({ leg, foot, sign });
+  }
+
+  function applyPose(focus) {
+    for (const { arm, paw, sign } of armParts) {
+      if (focus) {
+        arm.position.set(0.52 * sign, -0.38, 0.38);
+        arm.rotation.set(-1.0, 0, -0.15 * sign);
+        paw.position.set(0.3 * sign, -0.56, 0.76);
+      } else {
+        arm.position.set(0.6 * sign, -0.42, 0.28);
+        arm.rotation.set(-0.4, 0, -0.3 * sign);
+        paw.position.set(0.34 * sign, -0.72, 0.56);
+      }
+    }
+    for (const { leg, foot, sign } of legParts) {
+      leg.visible = !focus;
+      if (focus) foot.position.set(0.55 * sign, -1.5, 1.05);
+      else foot.position.set(0.34 * sign, -1.5, 0.16);
+    }
+  }
+  applyPose(false);
+
+  // ---------- 꼬리: 꽁지 스텁 ----------
+  const tail = new THREE.Group();
+  const stub = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), white);
+  stub.position.set(0, -0.85, -0.85);
+  tail.add(stub);
+  pet.add(tail);
+
+  // ---------- 집중 머리띠 ----------
+  const headband = new THREE.Mesh(
+    new THREE.TorusGeometry(0.85, 0.08, 12, 40),
+    new THREE.MeshStandardMaterial({ color: 0xe05a4e, roughness: 0.7 })
+  );
+  headband.rotation.x = 1.35;
+  headband.position.set(0, 0.85, 0.05);
+  headband.visible = false;
+  headGroup.add(headband);
+
+  // ---------- 책상 (집중 모드) ----------
+  const desk = new THREE.Group();
+  {
+    const wood = new THREE.MeshStandardMaterial({ color: 0xdbb98f, roughness: 0.9 });
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.07, 0.85), wood);
+    top.position.set(0, -0.72, 0.78);
+    const panelL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.78, 0.7), wood);
+    const panelR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.78, 0.7), wood);
+    panelL.position.set(-0.84, -1.14, 0.78);
+    panelR.position.set(0.84, -1.14, 0.78);
+    const front = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.75, 0.06), wood);
+    front.position.set(0, -1.13, 1.16);
+    desk.add(top, panelL, panelR, front);
+  }
+  desk.visible = false;
+  pet.add(desk);
+
+  // ---------- 노트북 (책상 위) ----------
+  const laptop = new THREE.Group();
+  {
+    const alu = new THREE.MeshStandardMaterial({ color: 0xd7d3ce, roughness: 0.55 });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.05, 0.6), alu);
+    const keys = new THREE.Mesh(
+      new THREE.BoxGeometry(0.82, 0.015, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0x8f8b86, roughness: 0.9 })
+    );
+    keys.position.set(0, 0.033, -0.02);
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.52, 0.04), alu);
+    screen.position.set(0, 0.21, 0.32);
+    screen.rotation.x = 0.5;
+    const glow = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.84, 0.42),
+      new THREE.MeshBasicMaterial({ color: 0xcfe8ff })
+    );
+    glow.position.set(0, 0.2, 0.29);
+    glow.rotation.x = 0.5;
+    glow.rotation.y = Math.PI;
+    const logo = new THREE.Mesh(
+      new THREE.CircleGeometry(0.11, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    logo.position.set(0, 0.23, 0.36);
+    logo.rotation.x = 0.5;
+    laptop.add(base, keys, screen, glow, logo);
+  }
+  laptop.position.set(0, -0.65, 0.82);
+  laptop.scale.setScalar(0.9);
+  laptop.visible = false;
+  pet.add(laptop);
+
+  // ---------- 애니메이션 상태 (다부진 템포) ----------
+  let anim = 'idle';
+  let t = 0;
+  let petYaw = 0;
+  let jumpStart = -1;
+  let blinkAt = 2;
+  let blinkUntil = 0;
+  let wiggleTarget = 0;
+  let wiggleAt = 3;
+  let userYaw = 0;
+  let userPitch = 0;
+  let rotating = false;
+  let returning = false;
+  const clock = new THREE.Clock();
+  let disposed = false;
+
+  function setAnimation(name) {
+    if (name === anim) return;
+    anim = name;
+    const focus = name === 'focus';
+    laptop.visible = focus;
+    desk.visible = focus;
+    headband.visible = focus;
+    applyPose(focus);
+    if (name === 'react' || name === 'cheer') jumpStart = t;
+    const s = name === 'drag' ? 1.3 : 1;
+    eyeL.scale.setScalar(s);
+    eyeR.scale.setScalar(s);
+  }
+
+  function rotateBy(dx, dy) {
+    rotating = true;
+    returning = false;
+    userYaw += dx * 0.02;
+    userPitch = Math.max(-0.7, Math.min(0.7, userPitch + dy * 0.012));
+  }
+
+  function endRotate() {
+    rotating = false;
+    userYaw = userYaw % (Math.PI * 2);
+    if (userYaw > Math.PI) userYaw -= Math.PI * 2;
+    if (userYaw < -Math.PI) userYaw += Math.PI * 2;
+  }
+
+  function isRotated() {
+    return Math.abs(userYaw) > 0.15 || Math.abs(userPitch) > 0.1;
+  }
+
+  function resetRotation() {
+    returning = true;
+  }
+
+  function frame() {
+    if (disposed) return;
+    requestAnimationFrame(frame);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    t += dt;
+
+    let bobAmp = 0.04;
+    let bobSpeed = 2.4; // 씩씩한 템포
+    let spin = 0;
+    let tilt = 0;
+    let excite = 0;
+    if (anim === 'focus') { bobAmp = 0.02; bobSpeed = 1.5; tilt = 0.1; }
+    else if (anim === 'rest' || anim === 'idleFun') { bobAmp = 0.08; bobSpeed = 5; spin = 2.6; excite = 1; }
+    else if (anim === 'cheer') { bobAmp = 0.06; bobSpeed = 6; spin = 3.2; excite = 1; }
+    else if (anim === 'drag') { bobAmp = 0.02; bobSpeed = 9; excite = 1; }
+
+    if (spin) {
+      petYaw += spin * dt;
+    } else {
+      petYaw = petYaw % (Math.PI * 2);
+      if (petYaw > Math.PI) petYaw -= Math.PI * 2;
+      if (petYaw < -Math.PI) petYaw += Math.PI * 2;
+      if (anim === 'idle') {
+        if (t > wiggleAt) {
+          wiggleTarget = (Math.random() - 0.5) * 0.5;
+          wiggleAt = t + 2 + Math.random() * 4;
+        }
+        petYaw += (wiggleTarget - petYaw) * Math.min(1, dt * 2.5);
+      } else {
+        petYaw *= Math.max(0, 1 - dt * 5);
+      }
+    }
+    pet.rotation.y = petYaw;
+    pet.rotation.x = tilt;
+
+    headGroup.rotation.z = Math.sin(t * 0.8) * 0.04 + (excite ? Math.sin(t * 10) * 0.03 : 0);
+
+    const bob = Math.sin(t * bobSpeed * 2) * bobAmp;
+    let jump = 0;
+    if (anim === 'cheer') {
+      jump = Math.abs(Math.sin((t - jumpStart) * 6)) * 0.35;
+    } else if (jumpStart >= 0) {
+      const e = t - jumpStart;
+      if (e < 0.5) jump = Math.sin((e / 0.5) * Math.PI) * 0.45;
+      else jumpStart = -1;
+    }
+    pet.position.y = bob + jump + (anim === 'focus' ? -0.12 : 0);
+    pet.scale.y = 1 + bob * 0.2;
+    const sq = 1 - bob * 0.08;
+    pet.scale.x = sq;
+    pet.scale.z = sq;
+
+    if (anim !== 'drag') {
+      if (t > blinkAt) {
+        blinkUntil = t + 0.12;
+        blinkAt = t + 2 + Math.random() * 3;
+      }
+      const eyeY = t < blinkUntil ? 0.1 : 1;
+      eyeL.scale.y = eyeY;
+      eyeR.scale.y = eyeY;
+    }
+
+    // 박쥐 귀 쫑긋 (신나면 파닥)
+    const ew = excite ? Math.sin(t * 13) * 0.08 : 0;
+    ears[0].rotation.z = 0.18 + ew;
+    ears[1].rotation.z = -0.18 - ew;
+    // 꽁지 실룩
+    tail.rotation.x = Math.sin(t * (excite ? 10 : 2)) * (excite ? 0.3 : 0.08);
+
+    if (returning) {
+      userYaw *= Math.max(0, 1 - dt * 5);
+      userPitch *= Math.max(0, 1 - dt * 5);
+      if (Math.abs(userYaw) < 0.01 && Math.abs(userPitch) < 0.01) {
+        userYaw = 0;
+        userPitch = 0;
+        returning = false;
+      }
+    }
+
+    if (anim === 'focus') {
+      armParts[0].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 10)) * 0.06;
+      armParts[1].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 10 + Math.PI)) * 0.06;
+    }
+
+    pivot.rotation.y = userYaw;
+    pivot.rotation.x = userPitch;
+
+    renderer.render(scene, camera);
+  }
+  frame();
+
+  return {
+    setAnimation,
+    rotateBy,
+    endRotate,
+    isRotated,
+    resetRotation,
+    dispose() {
+      disposed = true;
+      renderer.dispose();
+      if (renderer.domElement.parentNode === container) container.removeChild(renderer.domElement);
+    },
+  };
+}

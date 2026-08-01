@@ -267,9 +267,9 @@ export function createModel(container) {
   function applyPose(focus) {
     for (const { arm, paw, sign } of armParts) {
       if (focus) {
-        arm.position.set(0.5 * sign, -0.38, 0.42);
-        arm.rotation.set(-1.1, 0, -0.15 * sign); // 팔을 책상 위로 뻗음
-        paw.position.set(0.3 * sign, -0.56, 0.88);
+        arm.position.set(0.5 * sign, -0.38, 0.38);
+        arm.rotation.set(-1.0, 0, -0.15 * sign); // 팔을 책상 위로 뻗음
+        paw.position.set(0.3 * sign, -0.56, 0.76);
       } else {
         arm.position.set(0.56 * sign, -0.42, 0.3);
         arm.rotation.set(-0.5, 0, -0.28 * sign);
@@ -327,7 +327,10 @@ export function createModel(container) {
     const panelR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.78, 0.7), wood);
     panelL.position.set(-0.84, -1.14, 0.78);
     panelR.position.set(0.84, -1.14, 0.78);
-    desk.add(top, panelL, panelR);
+    // 앞 가림판
+    const front = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.75, 0.06), wood);
+    front.position.set(0, -1.13, 1.16);
+    desk.add(top, panelL, panelR, front);
   }
   desk.visible = false;
   pet.add(desk);
@@ -360,7 +363,7 @@ export function createModel(container) {
     logo.rotation.x = 0.5;
     laptop.add(base, keys, screen, glow, logo);
   }
-  laptop.position.set(0, -0.65, 0.72);
+  laptop.position.set(0, -0.65, 0.82);
   laptop.scale.setScalar(0.9);
   laptop.visible = false;
   pet.add(laptop);
@@ -497,8 +500,8 @@ export function createModel(container) {
 
     // 타이핑: 자기 손으로 타닥타닥
     if (anim === 'focus') {
-      armParts[0].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 11)) * 0.07;
-      armParts[1].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 11 + Math.PI)) * 0.07;
+      armParts[0].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 11)) * 0.05;
+      armParts[1].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 11 + Math.PI)) * 0.05;
     }
 
     pivot.rotation.y = userYaw;

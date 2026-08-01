@@ -35,7 +35,7 @@ export function createModel(container) {
   scene.add(pivot);
 
   const furWhite = new THREE.MeshStandardMaterial({ color: 0xfdfaf3, roughness: 1 });
-  const cream = new THREE.MeshStandardMaterial({ color: 0xf3ecdd, roughness: 1 });
+  const cream = new THREE.MeshStandardMaterial({ color: 0xeee1c8, roughness: 1 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x26201c, roughness: 0.4 });
   const pinkMat = new THREE.MeshStandardMaterial({ color: 0xf0a0a0, roughness: 0.8 });
 
@@ -114,12 +114,12 @@ export function createModel(container) {
   // ---------- 귀: 머리 옆에서 아래로 늘어진 복슬 귀 ----------
   const ears = [];
   for (const sign of [-1, 1]) {
-    const earGeo = new THREE.SphereGeometry(0.3, 20, 16);
-    fluff(earGeo, 0.035);
+    const earGeo = new THREE.SphereGeometry(0.32, 20, 16);
+    fluff(earGeo, 0.045);
     const ear = new THREE.Mesh(earGeo, cream);
-    ear.scale.set(0.55, 1.25, 0.55);
-    ear.position.set(0.76 * sign, 0.48, 0.02);
-    ear.rotation.z = -0.15 * sign;
+    ear.scale.set(0.62, 1.4, 0.55);
+    ear.position.set(0.98 * sign, 0.58, 0.0); // 머리 실루엣 바깥으로 확실히
+    ear.rotation.z = -0.32 * sign; // 위는 머리에 붙고 아래로 갈수록 살짝 벌어지게
     headGroup.add(ear);
     ears.push(ear);
   }

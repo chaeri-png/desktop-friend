@@ -129,8 +129,8 @@ export function createModel(container) {
     fluff(earGeo, 0.04);
     const ear = new THREE.Mesh(earGeo, cream);
     ear.scale.set(0.8, 1.75, 0.45);
-    ear.position.set(0.9 * sign, 0.42, 0.16); // 넓은 아래 로브가 얼굴 옆에 보이게 바깥·앞쪽으로
-    ear.rotation.z = -0.28 * sign;
+    ear.position.set(0.9 * sign, 0.42, 0.16);
+    ear.rotation.set(Math.PI, 0, -0.28 * sign); // 위아래 180도 뒤집기
     headGroup.add(ear);
     ears.push(ear);
   }

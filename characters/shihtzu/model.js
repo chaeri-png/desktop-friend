@@ -35,7 +35,7 @@ export function createModel(container) {
   scene.add(pivot);
 
   const furWhite = new THREE.MeshStandardMaterial({ color: 0xfdfaf3, roughness: 1 });
-  const brown = new THREE.MeshStandardMaterial({ color: 0xc9a06b, roughness: 1 });
+  const brown = new THREE.MeshStandardMaterial({ color: 0x96683f, roughness: 1 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x26201c, roughness: 0.4 });
 
   function blobOn(ctx, S, cx, cy, rx, ry, rot, fill) {
@@ -90,7 +90,7 @@ export function createModel(container) {
     ctx.fillStyle = '#fdfaf3';
     ctx.fillRect(0, 0, S, S);
     fur(ctx, S, 0.12);
-    const patch = 'rgba(198,155,100,0.95)';
+    const patch = 'rgba(148,100,58,0.95)';
     ctx.filter = 'blur(10px)';
     // 정수리 양옆 패치 (가운데 블레이즈는 흰색으로 남김)
     blobOn(ctx, S, 0.13, 0.16, 0.085, 0.1, 0.2, patch);
@@ -206,7 +206,7 @@ export function createModel(container) {
     ctx.fillStyle = '#fdfaf3';
     ctx.fillRect(0, 0, S, S);
     fur(ctx, S, 0.12);
-    const patch = 'rgba(198,155,100,0.85)';
+    const patch = 'rgba(148,100,58,0.85)';
     ctx.filter = 'blur(14px)';
     blobOn(ctx, S, 0.68, 0.28, 0.1, 0.09, 0.3, patch);
     blobOn(ctx, S, 0.84, 0.4, 0.09, 0.1, -0.2, patch);

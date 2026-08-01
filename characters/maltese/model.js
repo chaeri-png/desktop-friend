@@ -129,7 +129,7 @@ export function createModel(container) {
     fluff(earGeo, 0.04);
     const ear = new THREE.Mesh(earGeo, cream);
     ear.scale.set(0.95, 1.55, 0.55); // 짧고 넓고 도톰하게
-    ear.position.set(0.98 * sign, 0.5, 0.14); // 옆으로 발랄하게 벌어지게
+    ear.position.set(0.98 * sign, 0.56, 0.14); // 사진처럼 위쪽에서 옆으로 뻗치게
     ear.rotation.set(Math.PI, 0, -0.42 * sign);
     headGroup.add(ear);
     ears.push(ear);
@@ -139,7 +139,7 @@ export function createModel(container) {
   function makeEye(sign) {
     const eye = new THREE.Group();
     const ball = new THREE.Mesh(
-      new THREE.SphereGeometry(0.15, 24, 18),
+      new THREE.SphereGeometry(0.175, 24, 18), // 크고 동그란 뚱한 눈
       new THREE.MeshStandardMaterial({ color: 0x201612, roughness: 0.25 })
     );
     const shine1 = new THREE.Mesh(
@@ -153,7 +153,7 @@ export function createModel(container) {
     );
     shine2.position.set(0.05 * sign, -0.035, 0.12);
     eye.add(ball, shine1, shine2);
-    eye.position.set(0.32 * sign, 0.57, 0.82);
+    eye.position.set(0.29 * sign, 0.54, 0.84); // 코에 가깝게 모아서
     return eye;
   }
   const eyeL = makeEye(-1);
@@ -168,26 +168,17 @@ export function createModel(container) {
   muzzle.position.set(0, 0.26, 0.87);
   headGroup.add(muzzle);
 
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.105, 16, 12), dark);
-  nose.scale.set(1.2, 0.9, 0.8);
-  nose.position.set(0, 0.37, 1.0);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.125, 16, 12), dark);
+  nose.scale.set(1.2, 0.95, 0.8);
+  nose.position.set(0, 0.35, 1.0); // 사진처럼 큼직한 까만 코
   headGroup.add(nose);
 
-  // 분홍 혀 살짝 (참고 사진 2)
-  const tongue = new THREE.Mesh(
-    new THREE.SphereGeometry(0.07, 14, 10),
-    new THREE.MeshStandardMaterial({ color: 0xef9aa2, roughness: 0.8 })
-  );
-  tongue.scale.set(0.9, 0.45, 0.5);
-  tongue.position.set(0, 0.2, 0.99);
-  headGroup.add(tongue);
-
-  // ω 입 (앙 다문 입)
+  // ω 입 (앙 다문 뚱한 입 — 혀 없음)
   const mouthMat = new THREE.MeshBasicMaterial({ color: 0x7a6552 });
   for (const sign of [-1, 1]) {
     const arc = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 8, 18, Math.PI), mouthMat);
     arc.rotation.z = Math.PI;
-    arc.position.set(0.05 * sign, 0.26, 1.03);
+    arc.position.set(0.05 * sign, 0.22, 1.03);
     headGroup.add(arc);
   }
 

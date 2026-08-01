@@ -111,15 +111,26 @@ export function createModel(container) {
   head.position.set(0, 0.47, 0.05);
   headGroup.add(head);
 
-  // ---------- 귀: 머리 옆에서 아래로 늘어진 복슬 귀 ----------
+  // ---------- 귀: 머리 위에서 코 높이까지, 아래로 갈수록 넓어지는 물방울 귀 ----------
   const ears = [];
   for (const sign of [-1, 1]) {
-    const earGeo = new THREE.SphereGeometry(0.32, 20, 16);
-    fluff(earGeo, 0.045);
+    const earGeo = new THREE.SphereGeometry(0.3, 20, 16);
+    {
+      const pos = earGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const ny = pos.getY(i) / 0.3;
+        const widen = 1 + 0.55 * Math.max(0, -ny); // 아래는 넓게
+        const taper = 1 - 0.45 * Math.max(0, ny); // 위는 좁게
+        pos.setX(i, pos.getX(i) * widen * taper);
+        pos.setZ(i, pos.getZ(i) * widen * taper);
+      }
+      earGeo.computeVertexNormals();
+    }
+    fluff(earGeo, 0.04);
     const ear = new THREE.Mesh(earGeo, cream);
-    ear.scale.set(0.6, 1.35, 0.55);
-    ear.position.set(0.9 * sign, 0.28, 0.0); // 볼 옆으로 축 늘어지게 (아래로)
-    ear.rotation.z = -0.08 * sign;
+    ear.scale.set(0.62, 1.5, 0.5);
+    ear.position.set(0.88 * sign, 0.66, 0.0); // 머리 위쪽에 붙어 코 높이까지, 바깥으로 보이게
+    ear.rotation.z = -0.1 * sign;
     headGroup.add(ear);
     ears.push(ear);
   }

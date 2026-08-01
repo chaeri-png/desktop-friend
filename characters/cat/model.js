@@ -240,29 +240,49 @@ export function createModel(container) {
   body.position.set(0, -0.55, 0);
   pet.add(body);
 
-  // ---------- 팔: 배 앞에 모은 손 ----------
+  // ---------- 팔: 배 앞에 모은 손 (집중 땐 앞으로 뻗어 직접 타이핑) ----------
+  const armParts = [];
   for (const sign of [-1, 1]) {
     const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.4, 6, 12), cheese);
-    arm.position.set(0.56 * sign, -0.42, 0.3);
-    arm.rotation.z = -0.28 * sign;
-    arm.rotation.x = -0.5; // 아래팔이 앞으로
     pet.add(arm);
     const paw = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), white);
-    paw.position.set(0.3 * sign, -0.68, 0.62);
     pet.add(paw);
+    armParts.push({ arm, paw, sign });
   }
 
-  // ---------- 다리 + 발 ----------
+  // ---------- 다리 + 발 (집중 땐 철퍼덕 — 다리 접고 발이 앞으로) ----------
+  const legParts = [];
   for (const sign of [-1, 1]) {
     const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.24, 6, 12), cheese);
     leg.position.set(0.3 * sign, -1.32, 0.02);
     pet.add(leg);
     const foot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), white);
     foot.scale.set(1, 0.55, 1.5);
-    foot.position.set(0.32 * sign, -1.54, 0.16);
-    foot.rotation.y = 0.15 * sign; // 발끝 살짝 바깥으로
+    foot.rotation.y = 0.15 * sign;
     pet.add(foot);
+    legParts.push({ leg, foot, sign });
   }
+
+  // 평상시/집중 자세 적용
+  function applyPose(focus) {
+    for (const { arm, paw, sign } of armParts) {
+      if (focus) {
+        arm.position.set(0.5 * sign, -0.38, 0.42);
+        arm.rotation.set(-1.1, 0, -0.15 * sign); // 팔을 책상 위로 뻗음
+        paw.position.set(0.3 * sign, -0.56, 0.88);
+      } else {
+        arm.position.set(0.56 * sign, -0.42, 0.3);
+        arm.rotation.set(-0.5, 0, -0.28 * sign);
+        paw.position.set(0.3 * sign, -0.68, 0.62);
+      }
+    }
+    for (const { leg, foot, sign } of legParts) {
+      leg.visible = !focus;
+      if (focus) foot.position.set(0.55 * sign, -1.5, 1.05); // 책상 아래로 발 빼꼼
+      else foot.position.set(0.32 * sign, -1.54, 0.16);
+    }
+  }
+  applyPose(false);
 
   // ---------- 꼬리: 링 무늬, 끝은 흰색 ----------
   const tail = new THREE.Group();
@@ -287,9 +307,33 @@ export function createModel(container) {
   }
   pet.add(tail);
 
-  // ---------- 노트북 + 타이핑 손 (집중 모드에서만) ----------
+  // ---------- 집중 머리띠 ----------
+  const headband = new THREE.Mesh(
+    new THREE.TorusGeometry(0.8, 0.08, 12, 40),
+    new THREE.MeshStandardMaterial({ color: 0xe05a4e, roughness: 0.7 })
+  );
+  headband.rotation.x = 1.35;
+  headband.position.set(0, 0.82, 0.05);
+  headband.visible = false;
+  headGroup.add(headband);
+
+  // ---------- 책상 (집중 모드에서만) ----------
+  const desk = new THREE.Group();
+  {
+    const wood = new THREE.MeshStandardMaterial({ color: 0xdbb98f, roughness: 0.9 });
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.07, 0.85), wood);
+    top.position.set(0, -0.72, 0.78);
+    const panelL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.78, 0.7), wood);
+    const panelR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.78, 0.7), wood);
+    panelL.position.set(-0.84, -1.14, 0.78);
+    panelR.position.set(0.84, -1.14, 0.78);
+    desk.add(top, panelL, panelR);
+  }
+  desk.visible = false;
+  pet.add(desk);
+
+  // ---------- 노트북 (책상 위, 집중 모드에서만 — 타이핑은 고양이가 직접) ----------
   const laptop = new THREE.Group();
-  let tapL, tapR;
   {
     const alu = new THREE.MeshStandardMaterial({ color: 0xd7d3ce, roughness: 0.55 });
     const base = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.05, 0.6), alu);
@@ -314,14 +358,10 @@ export function createModel(container) {
     );
     logo.position.set(0, 0.23, 0.36);
     logo.rotation.x = 0.5;
-    tapL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), white);
-    tapR = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), white);
-    tapL.position.set(-0.24, 0.12, -0.05);
-    tapR.position.set(0.24, 0.12, -0.05);
-    laptop.add(base, keys, screen, glow, logo, tapL, tapR);
+    laptop.add(base, keys, screen, glow, logo);
   }
-  laptop.position.set(0, -1.48, 1.0);
-  laptop.scale.setScalar(1.05);
+  laptop.position.set(0, -0.65, 0.72);
+  laptop.scale.setScalar(0.9);
   laptop.visible = false;
   pet.add(laptop);
 
@@ -344,7 +384,11 @@ export function createModel(container) {
   function setAnimation(name) {
     if (name === anim) return;
     anim = name;
-    laptop.visible = name === 'focus';
+    const focus = name === 'focus';
+    laptop.visible = focus;
+    desk.visible = focus;
+    headband.visible = focus;
+    applyPose(focus);
     if (name === 'react' || name === 'cheer') jumpStart = t;
     const s = name === 'drag' ? 1.3 : 1;
     eyeL.scale.setScalar(s);
@@ -420,7 +464,7 @@ export function createModel(container) {
       if (e < 0.5) jump = Math.sin((e / 0.5) * Math.PI) * 0.5;
       else jumpStart = -1;
     }
-    pet.position.y = bob + jump;
+    pet.position.y = bob + jump + (anim === 'focus' ? -0.12 : 0); // 집중 땐 철퍼덕 낮게
     pet.scale.y = 1 + bob * 0.25;
     const sq = 1 - bob * 0.1;
     pet.scale.x = sq;
@@ -451,9 +495,10 @@ export function createModel(container) {
       }
     }
 
-    if (laptop.visible) {
-      tapL.position.y = 0.1 + Math.max(0, Math.sin(t * 11)) * 0.08;
-      tapR.position.y = 0.1 + Math.max(0, Math.sin(t * 11 + Math.PI)) * 0.08;
+    // 타이핑: 자기 손으로 타닥타닥
+    if (anim === 'focus') {
+      armParts[0].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 11)) * 0.07;
+      armParts[1].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 11 + Math.PI)) * 0.07;
     }
 
     pivot.rotation.y = userYaw;

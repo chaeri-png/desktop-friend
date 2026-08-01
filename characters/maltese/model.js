@@ -102,7 +102,7 @@ export function createModel(container) {
     return tex;
   }
   const headGeo = new THREE.SphereGeometry(0.88, 48, 36);
-  fluff(headGeo, 0.038); // 퍼피컷 — 뽀글뽀글 복슬복슬
+  fluff(headGeo, 0.028); // 복슬하되 양털처럼 과하지 않게
   const head = new THREE.Mesh(
     headGeo,
     new THREE.MeshStandardMaterial({ map: makeHeadTexture(), roughness: 1 })
@@ -111,23 +111,15 @@ export function createModel(container) {
   head.position.set(0, 0.47, 0.05);
   headGroup.add(head);
 
-  // 정수리 복슬 뭉치 (퍼피컷 크라운)
-  const crownGeo = new THREE.SphereGeometry(0.34, 20, 16);
-  fluff(crownGeo, 0.06);
-  const crown = new THREE.Mesh(crownGeo, furWhite);
-  crown.scale.set(1.25, 0.75, 1.05);
-  crown.position.set(0, 1.22, 0.1);
-  headGroup.add(crown);
-
-  // ---------- 귀: 위쪽 옆으로 복슬하게 뻗친 강아지 귀 ----------
+  // ---------- 귀: 머리 옆에서 아래로 늘어진 복슬 귀 ----------
   const ears = [];
   for (const sign of [-1, 1]) {
     const earGeo = new THREE.SphereGeometry(0.3, 20, 16);
-    fluff(earGeo, 0.05);
+    fluff(earGeo, 0.035);
     const ear = new THREE.Mesh(earGeo, cream);
-    ear.scale.set(0.65, 1.0, 0.55);
-    ear.position.set(0.8 * sign, 0.95, 0.02);
-    ear.rotation.z = -0.55 * sign;
+    ear.scale.set(0.55, 1.25, 0.55);
+    ear.position.set(0.76 * sign, 0.48, 0.02);
+    ear.rotation.z = -0.15 * sign;
     headGroup.add(ear);
     ears.push(ear);
   }
@@ -215,7 +207,7 @@ export function createModel(container) {
       pos.setXYZ(i, x, y, z);
     }
   }
-  fluff(bodyGeo, 0.034);
+  fluff(bodyGeo, 0.024);
   const body = new THREE.Mesh(
     bodyGeo,
     new THREE.MeshStandardMaterial({ map: makeBodyTexture(), roughness: 1 })

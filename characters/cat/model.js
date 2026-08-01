@@ -1,5 +1,5 @@
-// 치즈냥 3D — 두 발로 서 있는 아기 치즈태비
-// 큰 동그란 머리 + 머리보다 좁은 몸통 + 늘어뜨린 팔 + 짧은 다리 + 링 무늬 꼬리
+// 치즈냥 3D — 두 발로 선 보들보들 아기 치즈태비
+// 큰 동그란 머리(살짝 갸웃) + 배 앞에 모은 손 + ω 입 + 링 무늬 꼬리(끝은 흰색)
 import * as THREE from '../../src/renderer/vendor/three.module.js';
 
 export function createModel(container) {
@@ -24,7 +24,7 @@ export function createModel(container) {
   const key = new THREE.DirectionalLight(0xfff4e6, 1.6);
   key.position.set(2, 4, 5);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0xffffff, 1.6);
+  const rim = new THREE.DirectionalLight(0xffffff, 1.8);
   rim.position.set(-1.5, 3, -4);
   scene.add(rim);
 
@@ -47,7 +47,41 @@ export function createModel(container) {
     }
   }
 
-  // ---------- 머리: 큰 동그란 머리 (M자 이마 + 볼터치 텍스처) ----------
+  // 옅은 털 결 스트로크 (보들보들)
+  function fur(ctx, S, alpha) {
+    ctx.strokeStyle = `rgba(200,140,70,${alpha})`;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 420; i++) {
+      const x = ((i * 379) % S) + ((i * 131) % 7) - 3;
+      const y = (i * 613) % S;
+      const len = 10 + ((i * 17) % 16);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + ((i % 5) - 2) * 2, y + len);
+      ctx.stroke();
+    }
+  }
+
+  // 표면에 미세 솜털 요철 (좌표 기반이라 항상 동일)
+  function fluff(geo, amp) {
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const h = Math.sin(x * 43.1 + y * 26.9) * Math.cos(z * 31.7 - y * 18.3);
+      const a = amp * h;
+      const len = Math.hypot(x, y, z) || 1;
+      pos.setXYZ(i, x + (x / len) * a, y + (y / len) * a, z + (z / len) * a);
+    }
+    geo.computeVertexNormals();
+  }
+
+  // ---------- 머리 그룹 (목 부근을 축으로 살짝 갸웃) ----------
+  const headGroup = new THREE.Group();
+  headGroup.position.set(0, 0.35, 0);
+  pet.add(headGroup);
+
   function makeHeadTexture() {
     const S = 512;
     const cv = document.createElement('canvas');
@@ -56,29 +90,106 @@ export function createModel(container) {
     const ctx = cv.getContext('2d');
     ctx.fillStyle = '#eda85c';
     ctx.fillRect(0, 0, S, S);
+    fur(ctx, S, 0.1);
     const stripe = 'rgba(198,124,52,0.95)';
     ctx.filter = 'blur(3px)';
     blobOn(ctx, S, 0.215, 0.3, 0.014, 0.06, 0.15, stripe);
     blobOn(ctx, S, 0.25, 0.285, 0.015, 0.07, 0, stripe);
     blobOn(ctx, S, 0.285, 0.3, 0.014, 0.06, -0.15, stripe);
     ctx.filter = 'blur(7px)';
-    blobOn(ctx, S, 0.155, 0.55, 0.045, 0.03, 0, 'rgba(246,168,148,0.45)');
-    blobOn(ctx, S, 0.345, 0.55, 0.045, 0.03, 0, 'rgba(246,168,148,0.45)');
+    blobOn(ctx, S, 0.15, 0.55, 0.05, 0.033, 0, 'rgba(246,158,138,0.55)');
+    blobOn(ctx, S, 0.35, 0.55, 0.05, 0.033, 0, 'rgba(246,158,138,0.55)');
     ctx.filter = 'none';
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.wrapS = THREE.RepeatWrapping;
     return tex;
   }
+  const headGeo = new THREE.SphereGeometry(0.88, 48, 36);
+  fluff(headGeo, 0.02);
   const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.88, 48, 32),
+    headGeo,
     new THREE.MeshStandardMaterial({ map: makeHeadTexture(), roughness: 1 })
   );
-  head.scale.set(1.06, 0.98, 0.95);
-  head.position.set(0, 0.82, 0.05);
-  pet.add(head);
+  head.scale.set(1.08, 0.98, 0.95);
+  head.position.set(0, 0.47, 0.05);
+  headGroup.add(head);
 
-  // ---------- 몸통: 머리보다 좁은, 세로로 선 몸 (흰 배 + 등 줄무늬) ----------
+  // ---------- 귀 ----------
+  const ears = [];
+  for (const sign of [-1, 1]) {
+    const ear = new THREE.Group();
+    const outer = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.46, 12), cheese);
+    const inner = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.28, 10), pinkMat);
+    inner.position.set(0, -0.04, 0.09);
+    ear.add(outer, inner);
+    ear.position.set(0.46 * sign, 1.25, 0.05);
+    ear.rotation.z = -0.24 * sign;
+    headGroup.add(ear);
+    ears.push(ear);
+  }
+
+  // ---------- 눈 ----------
+  function makeEye(sign) {
+    const eye = new THREE.Group();
+    const ball = new THREE.Mesh(
+      new THREE.SphereGeometry(0.145, 24, 18),
+      new THREE.MeshStandardMaterial({ color: 0x1b1512, roughness: 0.25 })
+    );
+    const shine1 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    shine1.position.set(-0.04 * sign, 0.05, 0.11);
+    const shine2 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.022, 10, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    shine2.position.set(0.05 * sign, -0.035, 0.115);
+    eye.add(ball, shine1, shine2);
+    eye.position.set(0.32 * sign, 0.57, 0.82);
+    return eye;
+  }
+  const eyeL = makeEye(-1);
+  const eyeR = makeEye(1);
+  headGroup.add(eyeL, eyeR);
+
+  // ---------- 주둥이 + 코 + ω 입 + 수염 ----------
+  const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 18), white);
+  muzzle.scale.set(1.25, 0.75, 0.5);
+  muzzle.position.set(0, 0.25, 0.84);
+  headGroup.add(muzzle);
+
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.075, 4), pinkMat);
+  nose.rotation.x = Math.PI;
+  nose.rotation.y = Math.PI / 4;
+  nose.position.set(0, 0.39, 0.99);
+  headGroup.add(nose);
+
+  // ω 입 (아래로 열린 반원 두 개)
+  const mouthMat = new THREE.MeshBasicMaterial({ color: 0xb87a4a });
+  for (const sign of [-1, 1]) {
+    const arc = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.013, 8, 18, Math.PI), mouthMat);
+    arc.rotation.z = Math.PI; // ∪ 모양
+    arc.position.set(0.055 * sign, 0.31, 0.97);
+    headGroup.add(arc);
+  }
+
+  const whiskerMat = new THREE.MeshBasicMaterial({ color: 0xfdf8f0, transparent: true, opacity: 0.85 });
+  for (const sign of [-1, 1]) {
+    for (const [dy, rot] of [
+      [0.05, 0.2],
+      [0, 0],
+      [-0.05, -0.2],
+    ]) {
+      const wsk = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.44, 6), whiskerMat);
+      wsk.rotation.z = Math.PI / 2 + rot * sign;
+      wsk.position.set(0.42 * sign, 0.28 + dy, 0.85);
+      headGroup.add(wsk);
+    }
+  }
+
+  // ---------- 몸통: 머리보다 좁고 통통, 크림빛 배 ----------
   function makeBodyTexture() {
     const S = 512;
     const cv = document.createElement('canvas');
@@ -87,8 +198,9 @@ export function createModel(container) {
     const ctx = cv.getContext('2d');
     ctx.fillStyle = '#eda85c';
     ctx.fillRect(0, 0, S, S);
+    fur(ctx, S, 0.1);
     ctx.filter = 'blur(14px)';
-    blobOn(ctx, S, 0.25, 0.42, 0.14, 0.32, 0, 'rgba(255,251,244,0.97)'); // 흰 배
+    blobOn(ctx, S, 0.25, 0.42, 0.15, 0.33, 0, 'rgba(255,249,240,0.97)'); // 크림빛 배
     const stripe = 'rgba(198,124,52,0.9)';
     ctx.filter = 'blur(5px)';
     blobOn(ctx, S, 0.68, 0.22, 0.09, 0.018, 0.3, stripe);
@@ -111,16 +223,16 @@ export function createModel(container) {
       let y = pos.getY(i);
       let z = pos.getZ(i);
       const ny = y / 0.85;
-      x *= 0.8;
-      z *= 0.72;
-      y *= 1.32; // 세로로 선 몸통
+      x *= 0.84;
+      z *= 0.75;
+      y *= 1.18; // 살짝 짧고 통통한 몸통
       const hip = Math.max(0, -ny);
-      x *= 1 + 0.14 * Math.pow(hip, 1.4); // 엉덩이 쪽만 살짝
-      z *= 1 + 0.1 * Math.pow(hip, 1.4);
+      x *= 1 + 0.16 * Math.pow(hip, 1.4);
+      z *= 1 + 0.12 * Math.pow(hip, 1.4);
       pos.setXYZ(i, x, y, z);
     }
-    bodyGeo.computeVertexNormals();
   }
+  fluff(bodyGeo, 0.018);
   const body = new THREE.Mesh(
     bodyGeo,
     new THREE.MeshStandardMaterial({ map: makeBodyTexture(), roughness: 1 })
@@ -128,112 +240,55 @@ export function createModel(container) {
   body.position.set(0, -0.55, 0);
   pet.add(body);
 
-  // ---------- 귀 ----------
-  const ears = [];
+  // 가슴 솜털 뭉치
+  const chestFluffGeo = new THREE.SphereGeometry(0.24, 20, 14);
+  fluff(chestFluffGeo, 0.045);
+  const chestFluff = new THREE.Mesh(chestFluffGeo, white);
+  chestFluff.scale.set(1.2, 0.8, 0.55);
+  chestFluff.position.set(0, 0.02, 0.62);
+  pet.add(chestFluff);
+
+  // ---------- 팔: 배 앞에 모은 손 ----------
   for (const sign of [-1, 1]) {
-    const ear = new THREE.Group();
-    const outer = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.46, 12), cheese);
-    const inner = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.28, 10), pinkMat);
-    inner.position.set(0, -0.04, 0.09);
-    ear.add(outer, inner);
-    ear.position.set(0.46 * sign, 1.6, 0.05);
-    ear.rotation.z = -0.24 * sign;
-    pet.add(ear);
-    ears.push(ear);
-  }
-
-  // ---------- 눈 ----------
-  function makeEye(sign) {
-    const eye = new THREE.Group();
-    const ball = new THREE.Mesh(
-      new THREE.SphereGeometry(0.14, 24, 18),
-      new THREE.MeshStandardMaterial({ color: 0x1b1512, roughness: 0.25 })
-    );
-    const shine1 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.045, 12, 8),
-      new THREE.MeshBasicMaterial({ color: 0xffffff })
-    );
-    shine1.position.set(-0.04 * sign, 0.045, 0.11);
-    const shine2 = new THREE.Mesh(
-      new THREE.SphereGeometry(0.02, 10, 8),
-      new THREE.MeshBasicMaterial({ color: 0xffffff })
-    );
-    shine2.position.set(0.045 * sign, -0.035, 0.115);
-    eye.add(ball, shine1, shine2);
-    eye.position.set(0.32 * sign, 0.92, 0.82);
-    return eye;
-  }
-  const eyeL = makeEye(-1);
-  const eyeR = makeEye(1);
-  pet.add(eyeL, eyeR);
-
-  // ---------- 주둥이 + 코 + 수염 ----------
-  const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 18), white);
-  muzzle.scale.set(1.2, 0.72, 0.5);
-  muzzle.position.set(0, 0.6, 0.84);
-  pet.add(muzzle);
-
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.08, 4), pinkMat);
-  nose.rotation.x = Math.PI;
-  nose.rotation.y = Math.PI / 4;
-  nose.position.set(0, 0.73, 0.97);
-  pet.add(nose);
-
-  const whiskerMat = new THREE.MeshBasicMaterial({ color: 0xfdf8f0, transparent: true, opacity: 0.85 });
-  for (const sign of [-1, 1]) {
-    for (const [dy, rot] of [
-      [0.05, 0.2],
-      [0, 0],
-      [-0.05, -0.2],
-    ]) {
-      const wsk = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.44, 6), whiskerMat);
-      wsk.rotation.z = Math.PI / 2 + rot * sign;
-      wsk.position.set(0.4 * sign, 0.62 + dy, 0.86);
-      pet.add(wsk);
-    }
-  }
-
-  // ---------- 팔: 양옆에 늘어뜨린 팔 + 흰 발 ----------
-  for (const sign of [-1, 1]) {
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.42, 6, 12), cheese);
-    arm.position.set(0.68 * sign, -0.42, 0.12);
-    arm.rotation.z = -0.16 * sign;
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.4, 6, 12), cheese);
+    arm.position.set(0.56 * sign, -0.42, 0.3);
+    arm.rotation.z = -0.28 * sign;
+    arm.rotation.x = -0.5; // 아래팔이 앞으로
     pet.add(arm);
     const paw = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), white);
-    paw.position.set(0.74 * sign, -0.74, 0.16);
+    paw.position.set(0.3 * sign, -0.68, 0.62);
     pet.add(paw);
   }
 
   // ---------- 다리 + 발 ----------
   for (const sign of [-1, 1]) {
-    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.26, 6, 12), cheese);
-    leg.position.set(0.3 * sign, -1.4, 0.02);
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.24, 6, 12), cheese);
+    leg.position.set(0.3 * sign, -1.32, 0.02);
     pet.add(leg);
     const foot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), white);
     foot.scale.set(1, 0.55, 1.5);
-    foot.position.set(0.3 * sign, -1.62, 0.16);
+    foot.position.set(0.32 * sign, -1.54, 0.16);
+    foot.rotation.y = 0.15 * sign; // 발끝 살짝 바깥으로
     pet.add(foot);
   }
 
-  // ---------- 꼬리: 링 무늬, 바닥 뒤로 뻗어 올라가는 꼬리 ----------
+  // ---------- 꼬리: 링 무늬, 끝은 흰색 ----------
   const tail = new THREE.Group();
   {
     const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.1, -1.45, -0.5),
-      new THREE.Vector3(0.55, -1.55, -0.75),
-      new THREE.Vector3(0.95, -1.45, -0.85),
-      new THREE.Vector3(1.2, -1.15, -0.8),
-      new THREE.Vector3(1.28, -0.8, -0.7),
-      new THREE.Vector3(1.2, -0.45, -0.6),
+      new THREE.Vector3(0.1, -1.38, -0.5),
+      new THREE.Vector3(0.55, -1.48, -0.75),
+      new THREE.Vector3(0.95, -1.38, -0.85),
+      new THREE.Vector3(1.2, -1.08, -0.8),
+      new THREE.Vector3(1.28, -0.75, -0.7),
+      new THREE.Vector3(1.2, -0.4, -0.6),
     ]);
-    const N = 14; // 촘촘하게 이어진 링 무늬 꼬리
+    const N = 14;
     for (let i = 0; i < N; i++) {
       const p = curve.getPoint(i / (N - 1));
-      const r = 0.17 - (i / (N - 1)) * 0.06;
-      const seg = new THREE.Mesh(
-        new THREE.SphereGeometry(r, 14, 10),
-        Math.floor(i / 2) % 2 === 0 ? cheese : darkOrange
-      );
+      const r = 0.17 - (i / (N - 1)) * 0.055;
+      const mat = i >= N - 3 ? white : Math.floor(i / 2) % 2 === 0 ? cheese : darkOrange;
+      const seg = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), mat);
       seg.position.copy(p);
       tail.add(seg);
     }
@@ -273,7 +328,7 @@ export function createModel(container) {
     tapR.position.set(0.24, 0.12, -0.05);
     laptop.add(base, keys, screen, glow, logo, tapL, tapR);
   }
-  laptop.position.set(0, -1.55, 1.0);
+  laptop.position.set(0, -1.48, 1.0);
   laptop.scale.setScalar(1.05);
   laptop.visible = false;
   pet.add(laptop);
@@ -360,6 +415,9 @@ export function createModel(container) {
     }
     pet.rotation.y = petYaw;
     pet.rotation.x = tilt;
+
+    // 고개 갸웃 (천천히 좌우로)
+    headGroup.rotation.z = Math.sin(t * 0.9) * 0.06 + (excite ? Math.sin(t * 10) * 0.03 : 0);
 
     const bob = Math.sin(t * bobSpeed * 2) * bobAmp;
     let jump = 0;

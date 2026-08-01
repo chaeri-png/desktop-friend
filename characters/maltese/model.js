@@ -119,8 +119,8 @@ export function createModel(container) {
       const pos = earGeo.attributes.position;
       for (let i = 0; i < pos.count; i++) {
         const ny = pos.getY(i) / 0.3;
-        const widen = 1 + 0.35 * Math.max(0, ny); // 위가 넓은 삼각 플랩
-        const taper = 1 - 0.45 * Math.max(0, -ny); // 아래로 갈수록 좁게
+        const widen = 1 + 0.45 * Math.max(0, -ny); // 아래로 갈수록 넓게 (비글 귀처럼)
+        const taper = 1 - 0.5 * Math.max(0, ny); // 위(붙는 곳)는 좁게
         pos.setX(i, pos.getX(i) * widen * taper);
         pos.setZ(i, pos.getZ(i) * widen * taper);
       }
@@ -129,8 +129,8 @@ export function createModel(container) {
     fluff(earGeo, 0.04);
     const ear = new THREE.Mesh(earGeo, cream);
     ear.scale.set(0.8, 1.75, 0.45);
-    ear.position.set(0.76 * sign, 0.4, 0.1); // 넓적한 플랩이 볼터치 아래까지 늘어짐
-    ear.rotation.z = -0.18 * sign;
+    ear.position.set(0.9 * sign, 0.42, 0.16); // 넓은 아래 로브가 얼굴 옆에 보이게 바깥·앞쪽으로
+    ear.rotation.z = -0.28 * sign;
     headGroup.add(ear);
     ears.push(ear);
   }

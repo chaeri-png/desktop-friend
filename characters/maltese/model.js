@@ -102,7 +102,7 @@ export function createModel(container) {
     return tex;
   }
   const headGeo = new THREE.SphereGeometry(0.88, 48, 36);
-  fluff(headGeo, 0.016); // 뽀글이 아니라 비단결 직모 — 요철은 은은하게
+  fluff(headGeo, 0.038); // 퍼피컷 — 뽀글뽀글 복슬복슬
   const head = new THREE.Mesh(
     headGeo,
     new THREE.MeshStandardMaterial({ map: makeHeadTexture(), roughness: 1 })
@@ -111,29 +111,23 @@ export function createModel(container) {
   head.position.set(0, 0.47, 0.05);
   headGroup.add(head);
 
-  // 사과머리: 위로 묶은 털 + 분홍 머리끈
-  const topknotGeo = new THREE.SphereGeometry(0.2, 18, 14);
-  fluff(topknotGeo, 0.04);
-  const topknot = new THREE.Mesh(topknotGeo, furWhite);
-  topknot.scale.set(0.75, 1.4, 0.75);
-  topknot.position.set(0, 1.5, 0.12);
-  headGroup.add(topknot);
-  const hairTie = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.13, 0.14, 0.11, 16),
-    new THREE.MeshStandardMaterial({ color: 0xf28ab0, roughness: 0.8 })
-  );
-  hairTie.position.set(0, 1.36, 0.12);
-  headGroup.add(hairTie);
+  // 정수리 복슬 뭉치 (퍼피컷 크라운)
+  const crownGeo = new THREE.SphereGeometry(0.34, 20, 16);
+  fluff(crownGeo, 0.06);
+  const crown = new THREE.Mesh(crownGeo, furWhite);
+  crown.scale.set(1.25, 0.75, 1.05);
+  crown.position.set(0, 1.22, 0.1);
+  headGroup.add(crown);
 
-  // ---------- 귀: 머리 옆에 붙어 아래로 흘러내리는 긴 귀 ----------
+  // ---------- 귀: 위쪽 옆으로 복슬하게 뻗친 강아지 귀 ----------
   const ears = [];
   for (const sign of [-1, 1]) {
-    const earGeo = new THREE.SphereGeometry(0.32, 20, 16);
-    fluff(earGeo, 0.025);
+    const earGeo = new THREE.SphereGeometry(0.3, 20, 16);
+    fluff(earGeo, 0.05);
     const ear = new THREE.Mesh(earGeo, cream);
-    ear.scale.set(0.48, 1.45, 0.62);
-    ear.position.set(0.74 * sign, 0.42, 0.02);
-    ear.rotation.z = -0.18 * sign;
+    ear.scale.set(0.65, 1.0, 0.55);
+    ear.position.set(0.8 * sign, 0.95, 0.02);
+    ear.rotation.z = -0.55 * sign;
     headGroup.add(ear);
     ears.push(ear);
   }
@@ -165,7 +159,7 @@ export function createModel(container) {
 
   // ---------- 주둥이 + 단추코 + 혀 ----------
   const muzzleGeo = new THREE.SphereGeometry(0.24, 24, 18);
-  fluff(muzzleGeo, 0.02);
+  fluff(muzzleGeo, 0.035);
   const muzzle = new THREE.Mesh(muzzleGeo, furWhite);
   muzzle.scale.set(1.05, 0.72, 0.55);
   muzzle.position.set(0, 0.26, 0.87);
@@ -212,17 +206,16 @@ export function createModel(container) {
       let y = pos.getY(i);
       let z = pos.getZ(i);
       const ny = y / 0.85;
-      x *= 0.84;
-      z *= 0.75;
-      y *= 1.18;
-      // 비단결 털이 흘러내려 아래가 치마처럼 퍼지는 실루엣
+      x *= 0.9;
+      z *= 0.8;
+      y *= 1.05; // 아기 강아지 — 짧고 컴팩트한 솜뭉치
       const hip = Math.max(0, -ny);
-      x *= 1 + 0.22 * Math.pow(hip, 1.3);
-      z *= 1 + 0.17 * Math.pow(hip, 1.3);
+      x *= 1 + 0.12 * Math.pow(hip, 1.4);
+      z *= 1 + 0.09 * Math.pow(hip, 1.4);
       pos.setXYZ(i, x, y, z);
     }
   }
-  fluff(bodyGeo, 0.016);
+  fluff(bodyGeo, 0.034);
   const body = new THREE.Mesh(
     bodyGeo,
     new THREE.MeshStandardMaterial({ map: makeBodyTexture(), roughness: 1 })
@@ -280,8 +273,8 @@ export function createModel(container) {
     const plumeGeo = new THREE.SphereGeometry(0.3, 22, 16);
     fluff(plumeGeo, 0.05);
     const plume = new THREE.Mesh(plumeGeo, furWhite);
-    plume.scale.set(0.6, 1.7, 0.55);
-    plume.position.set(0.26, -0.3, -0.78);
+    plume.scale.set(0.6, 1.25, 0.55);
+    plume.position.set(0.24, -0.45, -0.75);
     plume.rotation.x = -0.3; // 위쪽이 등에 기대게
     plume.rotation.z = -0.15;
     const plumeBase = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10), furWhite);

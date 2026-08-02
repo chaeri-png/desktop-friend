@@ -207,16 +207,24 @@ export function createModel(container) {
   body.position.set(0, -0.55, 0);
   pet.add(body);
 
-  // ---------- 팔 (집중 땐 앞으로 뻗어 직접 타이핑) ----------
+  // ---------- 팔: 어깨→손이 한 덩어리로 이어진 팔 그룹 ----------
   const armParts = [];
   for (const sign of [-1, 1]) {
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.38, 6, 12), brownMat);
-    pet.add(arm);
-    const paw = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), brownMat);
-    pet.add(paw);
+    const armGroup = new THREE.Group();
+    // 팔뚝: 그룹 원점(어깨)에서 아래로 뻗는 캡슐
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.34, 6, 14), brownMat);
+    arm.position.set(0, -0.2, 0);
+    // 손: 팔뚝 끝에 겹치게 붙여 이음새 없이 연결
+    const paw = new THREE.Mesh(new THREE.SphereGeometry(0.17, 18, 14), brownMat);
+    paw.scale.set(1, 0.92, 1);
+    paw.position.set(0, -0.42, 0.02);
     const pad = new THREE.Mesh(new THREE.CircleGeometry(0.09, 16), creamMat);
-    pet.add(pad);
-    armParts.push({ arm, paw, pad, sign });
+    pad.position.set(0, -0.03, 0.15);
+    pad.rotation.x = -0.25;
+    paw.add(pad);
+    armGroup.add(arm, paw);
+    pet.add(armGroup);
+    armParts.push({ armGroup, paw, pad, sign });
   }
 
   // ---------- 다리 + 발 (발바닥 크림 패드) ----------
@@ -233,19 +241,17 @@ export function createModel(container) {
   }
 
   function applyPose(focus) {
-    for (const { arm, paw, pad, sign } of armParts) {
+    for (const { armGroup, pad, sign } of armParts) {
       if (focus) {
-        arm.position.set(0.5 * sign, -0.38, 0.38);
-        arm.rotation.set(-1.0, 0, -0.15 * sign);
-        paw.position.set(0.3 * sign, -0.56, 0.76);
+        // 어깨에서 앞으로 뻗어 노트북 위에 손이 닿는 자세
+        armGroup.position.set(0.5 * sign, -0.3, 0.18);
+        armGroup.rotation.set(-1.2, 0, -0.12 * sign);
         pad.visible = false;
       } else {
-        arm.position.set(0.6 * sign, -0.42, 0.28);
-        arm.rotation.set(-0.45, 0, -0.3 * sign);
-        paw.position.set(0.34 * sign, -0.68, 0.6);
+        // 몸 옆에 자연스럽게 늘어뜨린 자세 (살짝 바깥·앞쪽으로)
+        armGroup.position.set(0.66 * sign, -0.32, 0.16);
+        armGroup.rotation.set(-0.28, 0, 0.28 * sign);
         pad.visible = true;
-        pad.position.set(0.34 * sign, -0.68, 0.77);
-        pad.rotation.set(-0.2, 0.2 * sign, 0);
       }
     }
     for (const { leg, foot, sign } of legParts) {
@@ -451,10 +457,10 @@ export function createModel(container) {
       }
     }
 
-    // 타이핑 (도닥도닥 두드리는 템포)
+    // 타이핑 (팔 전체가 어깨에서 도닥도닥 — 좌우 번갈아)
     if (anim === 'focus') {
-      armParts[0].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 7.5)) * 0.05;
-      armParts[1].paw.position.y = -0.56 + Math.max(0, Math.sin(t * 7.5 + Math.PI)) * 0.05;
+      armParts[0].armGroup.rotation.x = -1.2 + Math.max(0, Math.sin(t * 7.5)) * 0.1;
+      armParts[1].armGroup.rotation.x = -1.2 + Math.max(0, Math.sin(t * 7.5 + Math.PI)) * 0.1;
     }
 
     pivot.rotation.y = userYaw;

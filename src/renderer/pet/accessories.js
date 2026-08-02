@@ -153,11 +153,12 @@ function buildTshirt(fit) {
     const s = fit.sleeve;
     for (const sign of [-1, 1]) {
       const sleeve = new THREE.Mesh(
-        new THREE.CylinderGeometry(s.r * 0.72, s.r * 1.2, s.len ?? 0.6, 18, 1, false),
+        new THREE.CylinderGeometry(s.r * 0.8, s.r * 1.2, s.len ?? 0.6, 18, 1, false),
         mat
       );
       sleeve.position.set(s.x * sign, s.y, s.z);
-      sleeve.rotation.set(-0.28, 0, (s.rotZ ?? 0.55) * sign);
+      // 앞 기울기를 약하게 — 뒤에서 봐도 팔 뒤쪽이 드러나지 않게
+      sleeve.rotation.set(-0.12, 0, (s.rotZ ?? 0.55) * sign);
       sleeve.userData.hideOnFocus = true;
       g.add(sleeve);
     }
@@ -183,6 +184,13 @@ function buildPants(fit) {
   hip.scale.set(b.rx * 1.05, b.ry * 1.05, b.rz * 1.05);
   hip.position.set(0, b.cy, 0);
   g.add(hip);
+  // 밑단 바닥판 — 아래에서 올려봐도 뚫려 보이지 않게 막는다
+  const endR = Math.sin(p0 + pl) * 1.05;
+  const cap = new THREE.Mesh(new THREE.CircleGeometry(1, 32), denim);
+  cap.scale.set(b.rx * endR, b.rz * endR, 1);
+  cap.rotation.x = Math.PI / 2;
+  cap.position.set(0, b.cy + Math.cos(p0 + pl) * b.ry * 1.05, 0);
+  g.add(cap);
   // 두 발로 선 캐릭터는 발목까지 내려오는 와이드 통
   if (fit.legX != null) {
     for (const sign of [-1, 1]) {

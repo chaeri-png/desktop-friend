@@ -419,8 +419,8 @@ export function createModel(container) {
   const accessories = initAccessories(bird, {
     eyeX: 0.35, eyeY: 0.56, eyeZ: 1.12,
     topY: 1.1, topZ: 0.1, topR: 0.8,
-    // 달걀 몸이라 옷은 아랫배 쪽에 걸친다
-    body: { cy: -0.1, rx: 1.18, ry: 1.25, rz: 1.18 },
+    // 달걀 몸(아래로 갈수록 통통)에 맞춘 옷 밴드 — 배 최대 폭 ~1.45
+    body: { cy: -0.3, rx: 1.42, ry: 1.32, rz: 1.45, shirtTheta: [1.25, 0.88], pantsTheta: [2.05, 0.58], patchY: -0.28 },
     exclude: ['headset'],
   });
   function setAccessories(list) {

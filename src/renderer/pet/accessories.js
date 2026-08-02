@@ -141,10 +141,11 @@ function buildTshirt(fit) {
     roughness: 0.95,
     side: THREE.DoubleSide,
   });
-  const gap = fit.armGap ?? 0.28; // 암홀 반각(라디안) — 팔 없는 캐릭터는 0으로
+  const gap = fit.armGap ?? 0.2; // 암홀 반각(라디안) — 소매가 이 틈을 덮는다
+  const [t0, tl] = b.shirtTheta ?? [0.5, 1.25]; // 둥근 몸 캐릭터는 밴드 위치를 따로 지정
   for (const phiStart of [gap, Math.PI + gap]) {
     const panel = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 40, 24, phiStart, Math.PI - gap * 2, 0.5, 1.25),
+      new THREE.SphereGeometry(1, 40, 24, phiStart, Math.PI - gap * 2, t0, tl),
       mat
     );
     panel.scale.set(b.rx * 1.07, b.ry * 1.07, b.rz * 1.07);
@@ -166,7 +167,7 @@ function buildTshirt(fit) {
     }
   }
   const patch = makeSmilePatch(Math.min(0.26, b.rx * 0.3));
-  patch.position.set(0, b.cy + b.ry * 0.28, b.rz * 1.07 * 0.97);
+  patch.position.set(0, b.patchY ?? b.cy + b.ry * 0.28, b.patchZ ?? b.rz * 1.07 * 0.97);
   patch.rotation.x = -0.28;
   g.add(patch);
   return g;
@@ -181,7 +182,8 @@ function buildPants(fit) {
     side: THREE.DoubleSide,
   });
   const g = new THREE.Group();
-  const hip = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20, 0, Math.PI * 2, 1.62, 0.95), denim);
+  const [p0, pl] = b.pantsTheta ?? [1.62, 0.95];
+  const hip = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20, 0, Math.PI * 2, p0, pl), denim);
   hip.scale.set(b.rx * 1.05, b.ry * 1.05, b.rz * 1.05);
   hip.position.set(0, b.cy, 0);
   g.add(hip);

@@ -1,6 +1,7 @@
-# 뱁새 데스크펫 프로젝트
+# 뱁새 데스크펫 프로젝트 (제품명: 🧸 Desktop friend by chaeri)
 
-픽사 팀 데스크펫 앱. 화면 구석에 사는 뱁새가 뽀모도로 타이머와 하루 일과를 함께해 주는 Electron 앱이다.
+픽사 팀 데스크펫 앱. 화면 구석에 사는 친구들이 뽀모도로 타이머와 하루 일과를 함께해 주는 Electron 앱이다.
+제품명은 Desktop friend by chaeri (package.json productName). 데이터 폴더도 이 이름을 따르며, 예전 "뱁새 데스크펫" 폴더 설정은 최초 실행 시 자동 이전된다.
 (ENA의 Phindoll — joelgc.com "Totally not a virus. Trust me...im a dolphin" 데스크펫에서 영감)
 
 ## 현재 상태 (2026-07-31 기준)

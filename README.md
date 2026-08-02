@@ -1,4 +1,4 @@
-# 🐦 Desktop friend by chaeri
+# 🧸 Desktop friend by chaeri
 
 화면 구석에 사는 친구들(뱁새·햄스터·치즈냥·비누·탱이·테리)이 뽀모도로 타이머와 하루 일과를 함께해 주는 픽사 팀 데스크펫.
 

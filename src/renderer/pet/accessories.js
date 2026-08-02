@@ -196,39 +196,33 @@ function buildHoodie(fit) {
   return g;
 }
 
-function buildBucket(fit) {
-  // 베이지 버킷햇: 원통 크라운 + 뚜껑 + 아래로 벌어진 챙
+function buildCap2(fit) {
+  // 뒤로 쓴 차콜 스냅백: 차콜 돔 + 빨간 챙(뒤쪽) + 빨간 단추 + 앞 스냅 밴드
   const g = new THREE.Group();
-  const beige = new THREE.MeshStandardMaterial({
-    color: 0xd9c6a0,
-    roughness: 0.95,
-    side: THREE.DoubleSide,
-  });
-  const band = new THREE.MeshStandardMaterial({ color: 0xbfa87e, roughness: 0.95 });
-  const capR = fit.topR * 0.6;
-  const capY = fit.topY + fit.topR * 0.2;
-  const capZ = fit.topZ + 0.05;
-  const crown = new THREE.Mesh(
-    new THREE.CylinderGeometry(capR * 0.82, capR, capR * 0.62, 24, 1, true),
-    beige
+  const charcoal = new THREE.MeshStandardMaterial({ color: 0x3a3f47, roughness: 0.85 });
+  const darker = new THREE.MeshStandardMaterial({ color: 0x2b3037, roughness: 0.9 });
+  const red = new THREE.MeshStandardMaterial({ color: 0xd6453c, roughness: 0.8 });
+  const capR = fit.topR * 0.66;
+  const capY = fit.topY + fit.topR * 0.17;
+  const capZ = fit.topZ + 0.02;
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(capR, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2),
+    charcoal
   );
-  crown.position.set(0, capY + capR * 0.26, capZ);
-  const lid = new THREE.Mesh(
-    new THREE.SphereGeometry(capR * 0.82, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-    beige
-  );
-  lid.scale.set(1, 0.42, 1);
-  lid.position.set(0, capY + capR * 0.55, capZ);
-  // 챙 아래 띠 포인트
-  const stripe = new THREE.Mesh(new THREE.TorusGeometry(capR * 0.99, 0.025, 8, 32), band);
-  stripe.rotation.x = Math.PI / 2;
-  stripe.position.set(0, capY + capR * 0.02, capZ);
-  const brim = new THREE.Mesh(
-    new THREE.CylinderGeometry(capR, capR * 1.5, capR * 0.34, 28, 1, true),
-    beige
-  );
-  brim.position.set(0, capY - capR * 0.12, capZ);
-  g.add(crown, lid, stripe, brim);
+  dome.scale.set(1, 0.8, 1);
+  dome.position.set(0, capY, capZ);
+  // 챙: 뒤통수 쪽으로 향하게 (거꾸로 쓴 모자)
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(capR * 0.62, 22, 14), red);
+  visor.scale.set(1.25, 0.13, 1.05);
+  visor.position.set(0, capY + 0.02, capZ - capR * 0.9);
+  visor.rotation.x = 0.16;
+  const button = new THREE.Mesh(new THREE.SphereGeometry(capR * 0.13, 12, 8), red);
+  button.position.set(0, capY + capR * 0.68, capZ);
+  // 앞쪽 스냅 밴드 (원래 뒤에 있는 조절 밴드가 앞으로 온 디테일)
+  const band = new THREE.Mesh(new THREE.BoxGeometry(capR * 0.72, capR * 0.16, 0.04), darker);
+  band.position.set(0, capY + 0.03, capZ + capR * 0.97);
+  band.rotation.x = -0.2;
+  g.add(dome, visor, button, band);
   return g;
 }
 
@@ -290,7 +284,7 @@ const BUILDERS = {
   oval: buildOvalGlasses,
   headset: buildHeadset,
   hat: buildHat,
-  bucket: buildBucket,
+  bucket: buildCap2,
   tshirt: buildTshirt,
   hoodie: buildHoodie,
   pants: buildPants,

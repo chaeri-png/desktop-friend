@@ -161,11 +161,11 @@ function addBodyShell(g, fit, mat) {
 }
 
 function buildHoodie(fit) {
-  // 라벤더 후드티: 몸판 + 소매 + 목 뒤 후드 + 앞 주머니 + 끈
+  // 크림 옐로우 후드티: 몸판 + 소매 + 목 뒤 후드 + 앞 주머니 + 끈
   const b = fit.body;
   const g = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({
-    color: 0xc3b4e6,
+    color: 0xf3d371,
     roughness: 0.95,
     side: THREE.DoubleSide,
   });
@@ -180,7 +180,7 @@ function buildHoodie(fit) {
   // 앞 주머니 (캥거루 포켓)
   const pocket = new THREE.Mesh(
     new THREE.BoxGeometry(b.rx * 0.66, b.ry * 0.28, 0.07),
-    new THREE.MeshStandardMaterial({ color: 0xb2a1d9, roughness: 0.95 })
+    new THREE.MeshStandardMaterial({ color: 0xe0bd57, roughness: 0.95 })
   );
   pocket.position.set(0, b.patchY != null ? b.patchY - 0.22 : b.cy - 0.08, b.rz * 1.07 * 1.02);
   pocket.rotation.x = -0.3;

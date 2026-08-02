@@ -141,17 +141,12 @@ function buildTshirt(fit) {
     roughness: 0.95,
     side: THREE.DoubleSide,
   });
-  const gap = fit.armGap ?? 0.2; // 암홀 반각(라디안) — 소매가 이 틈을 덮는다
+  // 몸판: 목~어깨~밑단까지 빈틈없는 통짜 셸 (팔은 소매 아래로 나온다)
   const [t0, tl] = b.shirtTheta ?? [0.5, 1.25]; // 둥근 몸 캐릭터는 밴드 위치를 따로 지정
-  for (const phiStart of [gap, Math.PI + gap]) {
-    const panel = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 40, 24, phiStart, Math.PI - gap * 2, t0, tl),
-      mat
-    );
-    panel.scale.set(b.rx * 1.07, b.ry * 1.07, b.rz * 1.07);
-    panel.position.set(0, b.cy, 0);
-    g.add(panel);
-  }
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24, 0, Math.PI * 2, t0, tl), mat);
+  shell.scale.set(b.rx * 1.07, b.ry * 1.07, b.rz * 1.07);
+  shell.position.set(0, b.cy, 0);
+  g.add(shell);
   // 반소매: 팔 윗부분을 덮는 통 (집중 모드에선 팔이 앞으로 가므로 숨김)
   if (fit.sleeve) {
     const s = fit.sleeve;

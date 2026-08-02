@@ -10,29 +10,40 @@
 // }
 import * as THREE from '../vendor/three.module.js';
 
-export const ACCESSORY_KINDS = ['glasses', 'headset', 'hat', 'ribbon'];
+export const ACCESSORY_KINDS = ['glasses', 'oval', 'headset', 'hat', 'ribbon'];
 
-function buildGlasses(fit) {
+// 안경 공통 골격 — color·렌즈 비율만 바꿔 동그란/타원 안경을 만든다
+function makeGlasses(fit, { color, sx, sy }) {
   const g = new THREE.Group();
-  const frame = new THREE.MeshStandardMaterial({ color: 0x4a3b2e, roughness: 0.4, metalness: 0.2 });
+  const frame = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.2 });
   const r = Math.min(0.3, fit.eyeX * 0.85);
   for (const sign of [-1, 1]) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.032, 10, 32), frame);
+    ring.scale.set(sx, sy, 1);
     ring.position.set(fit.eyeX * sign, fit.eyeY, fit.eyeZ + 0.08);
     g.add(ring);
     // 다리(관자놀이 쪽으로 짧게)
     const temple = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.5, 8), frame);
     temple.rotation.x = Math.PI / 2;
-    temple.position.set((fit.eyeX + r) * sign, fit.eyeY + 0.03, fit.eyeZ - 0.17);
+    temple.position.set((fit.eyeX + r * sx) * sign, fit.eyeY + 0.03, fit.eyeZ - 0.17);
     g.add(temple);
   }
   // 브릿지
-  const bw = Math.max(0.06, (fit.eyeX - r) * 2);
+  const bw = Math.max(0.06, (fit.eyeX - r * sx) * 2);
   const bridge = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, bw, 8), frame);
   bridge.rotation.z = Math.PI / 2;
-  bridge.position.set(0, fit.eyeY + r * 0.55, fit.eyeZ + 0.06);
+  bridge.position.set(0, fit.eyeY + r * sy * 0.55, fit.eyeZ + 0.06);
   g.add(bridge);
   return g;
+}
+
+function buildGlasses(fit) {
+  return makeGlasses(fit, { color: 0x4a3b2e, sx: 1, sy: 1 });
+}
+
+function buildOvalGlasses(fit) {
+  // 빨간색, 옆으로 긴 타원 렌즈
+  return makeGlasses(fit, { color: 0xd6453c, sx: 1.25, sy: 0.72 });
 }
 
 function buildHeadset(fit) {
@@ -64,25 +75,23 @@ function buildHeadset(fit) {
 }
 
 function buildHat(fit) {
-  // 따뜻한 니트 비니 + 크림 챙 + 방울
+  // 파란 볼캡: 돔 + 앞챙 + 꼭지 단추
   const g = new THREE.Group();
-  const knit = new THREE.MeshStandardMaterial({ color: 0xe0655a, roughness: 0.95 });
-  const cream = new THREE.MeshStandardMaterial({ color: 0xf3e2c3, roughness: 0.95 });
+  const blue = new THREE.MeshStandardMaterial({ color: 0x3f6fd1, roughness: 0.85 });
   const dome = new THREE.Mesh(
     new THREE.SphereGeometry(fit.topR, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2),
-    knit
+    blue
   );
-  dome.scale.set(1, 0.9, 1);
+  dome.scale.set(1, 0.78, 1);
   dome.position.set(0, fit.topY, fit.topZ);
-  const brim = new THREE.Mesh(
-    new THREE.TorusGeometry(fit.topR * 0.94, fit.topR * 0.13, 12, 36),
-    cream
-  );
-  brim.rotation.x = Math.PI / 2;
-  brim.position.set(0, fit.topY + 0.02, fit.topZ);
-  const pompom = new THREE.Mesh(new THREE.SphereGeometry(fit.topR * 0.24, 14, 10), cream);
-  pompom.position.set(0, fit.topY + fit.topR * 0.92, fit.topZ);
-  g.add(dome, brim, pompom);
+  // 앞챙: 납작하게 누른 구를 앞으로 내밀고 살짝 아래로 기울임
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(fit.topR * 0.62, 22, 14), blue);
+  visor.scale.set(1.25, 0.13, 1.05);
+  visor.position.set(0, fit.topY + 0.03, fit.topZ + fit.topR * 0.88);
+  visor.rotation.x = -0.16;
+  const button = new THREE.Mesh(new THREE.SphereGeometry(fit.topR * 0.12, 12, 8), blue);
+  button.position.set(0, fit.topY + fit.topR * 0.8, fit.topZ);
+  g.add(dome, visor, button);
   return g;
 }
 
@@ -109,6 +118,7 @@ function buildRibbon(fit) {
 
 const BUILDERS = {
   glasses: buildGlasses,
+  oval: buildOvalGlasses,
   headset: buildHeadset,
   hat: buildHat,
   ribbon: buildRibbon,

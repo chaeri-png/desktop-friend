@@ -516,8 +516,8 @@ export function createModel(container) {
   const accessories = initAccessories(headGroup, {
     eyeX: 0.42, eyeY: 0.55, eyeZ: 0.8,
     topY: 1.05, topZ: 0.05, topR: 0.78,
-    bandR: 1.0, bandY: 0.47, bandZ: 0.05, cupX: 1.02,
-    bow: [0, 1.16, 0.4],
+    // 늘어진 귀에 파묻히지 않게 이어컵을 귀 바깥으로
+    bandR: 1.32, bandY: 0.52, bandZ: 0.08, cupX: 1.34,
   });
 
   return {

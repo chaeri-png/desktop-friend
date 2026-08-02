@@ -498,7 +498,6 @@ export function createModel(container) {
     eyeX: 0.44, eyeY: 0.5, eyeZ: 0.82,
     topY: 1.0, topZ: 0.05, topR: 0.8,
     bandR: 1.02, bandY: 0.44, bandZ: 0.05, cupX: 1.06,
-    bow: [0.42, 1.08, 0.3],
   });
 
   return {

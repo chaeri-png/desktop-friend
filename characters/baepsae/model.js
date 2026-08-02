@@ -419,7 +419,6 @@ export function createModel(container) {
   const accessories = initAccessories(bird, {
     eyeX: 0.35, eyeY: 0.56, eyeZ: 1.12,
     topY: 1.1, topZ: 0.1, topR: 0.8,
-    bow: [0.45, 1.25, 0.5],
     exclude: ['headset'],
   });
   function setAccessories(list) {

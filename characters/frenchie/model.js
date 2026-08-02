@@ -106,18 +106,29 @@ export function createModel(container) {
   for (const sign of [-1, 1]) {
     const ear = new THREE.Group();
     const outerGeo = new THREE.SphereGeometry(0.34, 22, 16);
+    {
+      // 박쥐귀: 밑동이 넓고 위는 둥글게 모임
+      const pos = outerGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const ny = pos.getY(i) / 0.34;
+        const widen = 1 + 0.35 * Math.max(0, -ny);
+        pos.setX(i, pos.getX(i) * widen);
+        pos.setZ(i, pos.getZ(i) * widen);
+      }
+      outerGeo.computeVertexNormals();
+    }
     fluff(outerGeo, 0.01);
     const outer = new THREE.Mesh(outerGeo, black);
-    outer.scale.set(0.75, 1.35, 0.4);
+    outer.scale.set(0.85, 1.25, 0.45); // 밑동 넓고 위로 선 박쥐귀
     const inner = new THREE.Mesh(
       new THREE.SphereGeometry(0.22, 18, 14),
       new THREE.MeshStandardMaterial({ color: 0x1c1815, roughness: 0.95 }) // 귀 안쪽도 블랙
     );
-    inner.scale.set(0.65, 1.15, 0.3);
-    inner.position.set(0, -0.03, 0.09);
+    inner.scale.set(0.75, 0.85, 0.32);
+    inner.position.set(0, -0.02, 0.1);
     ear.add(outer, inner);
-    ear.position.set(0.56 * sign, 1.32, 0.0);
-    ear.rotation.z = -0.18 * sign; // 살짝 바깥으로 벌어진 박쥐 귀
+    ear.position.set(0.6 * sign, 1.2, 0.0); // 밑동이 머리 옆선에 이어지며 위로 섬
+    ear.rotation.z = -0.22 * sign; // 살짝 V자
     headGroup.add(ear);
     ears.push(ear);
   }
@@ -207,13 +218,16 @@ export function createModel(container) {
       let y = pos.getY(i);
       let z = pos.getZ(i);
       const ny = y / 0.85;
-      x *= 0.98; // 프렌치답게 어깨 넓게
+      x *= 0.98;
       z *= 0.82;
       y *= 1.0; // 짧고 다부지게
+      // 근육질: 어깨·가슴은 넓고 허리로 갈수록 조여지는 역삼각 실루엣
+      const shoulder = Math.exp(-Math.pow((ny - 0.35) / 0.38, 2));
+      x *= 1 + 0.16 * shoulder;
+      const waist = Math.exp(-Math.pow((ny + 0.3) / 0.35, 2));
+      x *= 1 - 0.06 * waist;
       const chest = Math.exp(-Math.pow((ny - 0.25) / 0.4, 2));
-      if (z > 0) z += 0.1 * chest * (z / 0.85); // 가슴 근육 봉긋
-      const hip = Math.max(0, -ny);
-      x *= 1 + 0.06 * Math.pow(hip, 1.4);
+      if (z > 0) z += 0.14 * chest * (z / 0.85); // 가슴 근육 봉긋
       pos.setXYZ(i, x, y, z);
     }
   }
@@ -228,9 +242,9 @@ export function createModel(container) {
   // ---------- 팔 (집중 땐 앞으로 뻗어 직접 타이핑) ----------
   const armParts = [];
   for (const sign of [-1, 1]) {
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.38, 6, 12), white);
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.36, 6, 12), white);
     pet.add(arm);
-    const paw = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), white);
+    const paw = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), white);
     pet.add(paw);
     armParts.push({ arm, paw, sign });
   }

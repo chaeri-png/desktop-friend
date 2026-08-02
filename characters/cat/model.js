@@ -532,7 +532,7 @@ export function createModel(container) {
   accessoriesRef = accessories;
   function setAccessories(list) {
     const worn = accessories.setAccessories(list);
-    shirtOn = worn.has('tshirt');
+    shirtOn = worn.has('tshirt') || worn.has('hoodie');
     applyPose(anim === 'focus');
   }
 

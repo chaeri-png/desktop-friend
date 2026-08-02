@@ -11,7 +11,7 @@
 // }
 import * as THREE from '../vendor/three.module.js';
 
-export const ACCESSORY_KINDS = ['glasses', 'oval', 'headset', 'hat', 'tshirt', 'pants'];
+export const ACCESSORY_KINDS = ['glasses', 'oval', 'headset', 'hat', 'bucket', 'tshirt', 'hoodie', 'pants'];
 
 // 안경 공통 골격 — color·렌즈 비율만 바꿔 동그란/타원 안경을 만든다
 function makeGlasses(fit, { color, sx, sy }) {
@@ -131,9 +131,109 @@ function makeSmilePatch(r) {
   return patch;
 }
 
+// 반소매: 어깨(몸판 안쪽)에서 시작해 팔로 내려오는 막힌 원뿔형 래글런 소매
+// (집중 모드엔 팔이 앞으로 가므로 숨김) — 티셔츠·후드티 공용
+function addSleeves(g, fit, mat) {
+  if (!fit.sleeve) return;
+  const s = fit.sleeve;
+  for (const sign of [-1, 1]) {
+    const sleeve = new THREE.Mesh(
+      new THREE.CylinderGeometry(s.r * 0.8, s.r * 1.2, s.len ?? 0.6, 18, 1, false),
+      mat
+    );
+    sleeve.position.set(s.x * sign, s.y, s.z);
+    // 앞 기울기를 약하게 — 뒤에서 봐도 팔 뒤쪽이 드러나지 않게
+    sleeve.rotation.set(-0.12, 0, (s.rotZ ?? 0.55) * sign);
+    sleeve.userData.hideOnFocus = true;
+    g.add(sleeve);
+  }
+}
+
+// 몸판 셸 (티셔츠·후드티 공용)
+function addBodyShell(g, fit, mat) {
+  const b = fit.body;
+  const [t0, tl] = b.shirtTheta ?? [0.5, 1.25];
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24, 0, Math.PI * 2, t0, tl), mat);
+  shell.scale.set(b.rx * 1.07, b.ry * 1.07, b.rz * 1.07);
+  shell.position.set(0, b.cy, 0);
+  g.add(shell);
+  return t0;
+}
+
+function buildHoodie(fit) {
+  // 쿨그레이 후드티: 몸판 + 소매 + 목 뒤 후드 + 앞 주머니 + 끈
+  const b = fit.body;
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xb9c2cf,
+    roughness: 0.95,
+    side: THREE.DoubleSide,
+  });
+  const t0 = addBodyShell(g, fit, mat);
+  addSleeves(g, fit, mat);
+  // 후드: 목 뒤에 접혀 있는 반구
+  const topY = b.cy + Math.cos(t0) * b.ry * 1.07;
+  const hood = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 16), mat);
+  hood.scale.set(b.rx * 1.1, 0.72, 0.62);
+  hood.position.set(0, topY - 0.05, -b.rz * 0.78);
+  g.add(hood);
+  // 앞 주머니 (캥거루 포켓)
+  const pocket = new THREE.Mesh(
+    new THREE.BoxGeometry(b.rx * 0.66, b.ry * 0.28, 0.07),
+    new THREE.MeshStandardMaterial({ color: 0xaab3c0, roughness: 0.95 })
+  );
+  pocket.position.set(0, b.patchY != null ? b.patchY - 0.22 : b.cy - 0.08, b.rz * 1.07 * 1.02);
+  pocket.rotation.x = -0.3;
+  g.add(pocket);
+  // 끈 두 가닥
+  const stringMat = new THREE.MeshStandardMaterial({ color: 0xf3f3f0, roughness: 0.9 });
+  for (const sign of [-1, 1]) {
+    const str = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 8), stringMat);
+    str.position.set(0.14 * sign, (b.patchY ?? b.cy + b.ry * 0.28) - 0.05, b.rz * 1.07 * 1.0);
+    str.rotation.x = -0.2;
+    g.add(str);
+  }
+  return g;
+}
+
+function buildBucket(fit) {
+  // 베이지 버킷햇: 원통 크라운 + 뚜껑 + 아래로 벌어진 챙
+  const g = new THREE.Group();
+  const beige = new THREE.MeshStandardMaterial({
+    color: 0xd9c6a0,
+    roughness: 0.95,
+    side: THREE.DoubleSide,
+  });
+  const band = new THREE.MeshStandardMaterial({ color: 0xbfa87e, roughness: 0.95 });
+  const capR = fit.topR * 0.6;
+  const capY = fit.topY + fit.topR * 0.2;
+  const capZ = fit.topZ + 0.05;
+  const crown = new THREE.Mesh(
+    new THREE.CylinderGeometry(capR * 0.82, capR, capR * 0.62, 24, 1, true),
+    beige
+  );
+  crown.position.set(0, capY + capR * 0.26, capZ);
+  const lid = new THREE.Mesh(
+    new THREE.SphereGeometry(capR * 0.82, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    beige
+  );
+  lid.scale.set(1, 0.42, 1);
+  lid.position.set(0, capY + capR * 0.55, capZ);
+  // 챙 아래 띠 포인트
+  const stripe = new THREE.Mesh(new THREE.TorusGeometry(capR * 0.99, 0.025, 8, 32), band);
+  stripe.rotation.x = Math.PI / 2;
+  stripe.position.set(0, capY + capR * 0.02, capZ);
+  const brim = new THREE.Mesh(
+    new THREE.CylinderGeometry(capR, capR * 1.5, capR * 0.34, 28, 1, true),
+    beige
+  );
+  brim.position.set(0, capY - capR * 0.12, capZ);
+  g.add(crown, lid, stripe, brim);
+  return g;
+}
+
 function buildTshirt(fit) {
-  // MZ st. 오버사이즈 티: 크림 바탕 + 가슴 스마일 와펜
-  // 양옆(팔 방향 ±x)에 암홀 틈을 남긴 앞판+뒤판 구조라 팔이 셔츠에 묻히지 않는다
+  // MZ st. 오버사이즈 티: 크림 바탕 + 가슴 스마일 와펜 (팔은 소매 아래로 나온다)
   const b = fit.body;
   const g = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({
@@ -141,28 +241,8 @@ function buildTshirt(fit) {
     roughness: 0.95,
     side: THREE.DoubleSide,
   });
-  // 몸판: 목~어깨~밑단까지 빈틈없는 통짜 셸 (팔은 소매 아래로 나온다)
-  const [t0, tl] = b.shirtTheta ?? [0.5, 1.25]; // 둥근 몸 캐릭터는 밴드 위치를 따로 지정
-  const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24, 0, Math.PI * 2, t0, tl), mat);
-  shell.scale.set(b.rx * 1.07, b.ry * 1.07, b.rz * 1.07);
-  shell.position.set(0, b.cy, 0);
-  g.add(shell);
-  // 반소매: 어깨(몸판 안쪽)에서 시작해 팔로 내려오는 막힌 원뿔형 래글런 소매
-  // (집중 모드에선 팔이 앞으로 가므로 숨김)
-  if (fit.sleeve) {
-    const s = fit.sleeve;
-    for (const sign of [-1, 1]) {
-      const sleeve = new THREE.Mesh(
-        new THREE.CylinderGeometry(s.r * 0.8, s.r * 1.2, s.len ?? 0.6, 18, 1, false),
-        mat
-      );
-      sleeve.position.set(s.x * sign, s.y, s.z);
-      // 앞 기울기를 약하게 — 뒤에서 봐도 팔 뒤쪽이 드러나지 않게
-      sleeve.rotation.set(-0.12, 0, (s.rotZ ?? 0.55) * sign);
-      sleeve.userData.hideOnFocus = true;
-      g.add(sleeve);
-    }
-  }
+  addBodyShell(g, fit, mat);
+  addSleeves(g, fit, mat);
   const patch = makeSmilePatch(Math.min(0.26, b.rx * 0.3));
   patch.position.set(0, b.patchY ?? b.cy + b.ry * 0.28, b.patchZ ?? b.rz * 1.07 * 0.97);
   patch.rotation.x = -0.28;
@@ -210,12 +290,14 @@ const BUILDERS = {
   oval: buildOvalGlasses,
   headset: buildHeadset,
   hat: buildHat,
+  bucket: buildBucket,
   tshirt: buildTshirt,
+  hoodie: buildHoodie,
   pants: buildPants,
 };
 
-// 옷(티셔츠·바지)은 몸통 좌표, 나머지는 머리 좌표에 붙는다
-const BODY_KINDS = new Set(['tshirt', 'pants']);
+// 옷(티셔츠·후드티·바지)은 몸통 좌표, 나머지는 머리 좌표에 붙는다
+const BODY_KINDS = new Set(['tshirt', 'hoodie', 'pants']);
 
 // headParent: 머리 그룹(갸웃 기울기를 따라감), bodyParent: 몸통 그룹(옷용, 생략 시 머리와 동일)
 export function initAccessories(headParent, fit, bodyParent = headParent) {

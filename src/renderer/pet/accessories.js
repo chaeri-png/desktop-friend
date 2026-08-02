@@ -197,32 +197,36 @@ function buildHoodie(fit) {
 }
 
 function buildCap2(fit) {
-  // 뒤로 쓴 차콜 스냅백: 차콜 돔 + 빨간 챙(뒤쪽) + 빨간 단추 + 앞 스냅 밴드
+  // 옆으로 삐딱하게 쓴 민트 스냅백: 민트 돔 + 노란 챙(옆쪽) + 노란 단추 + 크림 스냅 밴드
   const g = new THREE.Group();
-  const charcoal = new THREE.MeshStandardMaterial({ color: 0x3a3f47, roughness: 0.85 });
-  const darker = new THREE.MeshStandardMaterial({ color: 0x2b3037, roughness: 0.9 });
-  const red = new THREE.MeshStandardMaterial({ color: 0xd6453c, roughness: 0.8 });
+  const mint = new THREE.MeshStandardMaterial({ color: 0x8fd6c7, roughness: 0.85 });
+  const cream = new THREE.MeshStandardMaterial({ color: 0xf5eddc, roughness: 0.9 });
+  const yellow = new THREE.MeshStandardMaterial({ color: 0xf2c14e, roughness: 0.8 });
   const capR = fit.topR * 0.66;
   const capY = fit.topY + fit.topR * 0.17;
   const capZ = fit.topZ + 0.02;
+  const cap = new THREE.Group();
   const dome = new THREE.Mesh(
     new THREE.SphereGeometry(capR, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2),
-    charcoal
+    mint
   );
   dome.scale.set(1, 0.8, 1);
   dome.position.set(0, capY, capZ);
-  // 챙: 뒤통수 쪽으로 향하게 (거꾸로 쓴 모자)
-  const visor = new THREE.Mesh(new THREE.SphereGeometry(capR * 0.62, 22, 14), red);
+  // 챙 (일단 정면으로 만들고, 아래에서 그룹째 옆으로 돌린다)
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(capR * 0.62, 22, 14), yellow);
   visor.scale.set(1.25, 0.13, 1.05);
-  visor.position.set(0, capY + 0.02, capZ - capR * 0.9);
-  visor.rotation.x = 0.16;
-  const button = new THREE.Mesh(new THREE.SphereGeometry(capR * 0.13, 12, 8), red);
+  visor.position.set(0, capY + 0.02, capZ + capR * 0.9);
+  visor.rotation.x = -0.16;
+  const button = new THREE.Mesh(new THREE.SphereGeometry(capR * 0.13, 12, 8), yellow);
   button.position.set(0, capY + capR * 0.68, capZ);
-  // 앞쪽 스냅 밴드 (원래 뒤에 있는 조절 밴드가 앞으로 온 디테일)
-  const band = new THREE.Mesh(new THREE.BoxGeometry(capR * 0.72, capR * 0.16, 0.04), darker);
-  band.position.set(0, capY + 0.03, capZ + capR * 0.97);
-  band.rotation.x = -0.2;
-  g.add(dome, visor, button, band);
+  // 스냅 조절 밴드 (챙 반대쪽)
+  const band = new THREE.Mesh(new THREE.BoxGeometry(capR * 0.72, capR * 0.16, 0.04), cream);
+  band.position.set(0, capY + 0.03, capZ - capR * 0.97);
+  band.rotation.x = 0.2;
+  cap.add(dome, visor, button, band);
+  // 옆으로 삐딱하게 — 정면에서 챙 옆면이 보이도록
+  cap.rotation.y = 1.25;
+  g.add(cap);
   return g;
 }
 

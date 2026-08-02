@@ -50,7 +50,10 @@ function charInfo() {
     return { name: '펫', emoji: '✨', lines: [] };
   }
 }
-ipcMain.handle('get-character', () => loadCharacter(state.store.character));
+ipcMain.handle('get-character', () => ({
+  ...loadCharacter(state.store.character),
+  accessories: state.store.accessories?.[state.store.character] ?? [],
+}));
 
 // 개발용: BAEPSAE_SNAP=1 로 실행하면 펫 창이 정면/옆/뒷모습 스냅샷을 프로젝트 루트에 저장
 const SNAP_MODE = !!process.env.BAEPSAE_SNAP && !app.isPackaged;
@@ -165,6 +168,11 @@ function applyStore(partial) {
     autoRepeat: state.store.autoRepeat,
   };
   if (partial.character) petWin?.webContents.send('character-changed', null);
+  if ('accessories' in partial)
+    petWin?.webContents.send(
+      'accessories-changed',
+      state.store.accessories?.[state.store.character] ?? []
+    );
   if ('autoStart' in partial) app.setLoginItemSettings({ openAtLogin: state.store.autoStart });
 }
 

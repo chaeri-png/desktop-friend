@@ -133,6 +133,7 @@ async function create3DPlayer(baseUrl) {
 
   return {
     setAnimation: bird.setAnimation,
+    setAccessories: bird.setAccessories,
     rotateBy: bird.rotateBy,
     endRotate: bird.endRotate,
     isRotated: bird.isRotated,
@@ -160,6 +161,7 @@ async function init() {
     sprite.hidden = true;
     stage.hidden = false;
     player = await create3DPlayer(data.baseUrl);
+    player.setAccessories?.(data.accessories ?? []);
   } else {
     stage.hidden = true;
     sprite.hidden = false;
@@ -189,6 +191,7 @@ window.api.on('say', ({ text, ms, thought }) => {
 });
 
 window.api.on('character-changed', () => init());
+window.api.on('accessories-changed', (list) => player?.setAccessories?.(list ?? []));
 
 document.addEventListener('contextmenu', (e) => {
   e.preventDefault();

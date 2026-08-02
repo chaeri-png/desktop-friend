@@ -1,6 +1,7 @@
 // 치즈냥 3D — 두 발로 선 보들보들 아기 치즈태비
 // 큰 동그란 머리(살짝 갸웃) + 배 앞에 모은 손 + ω 입 + 링 무늬 꼬리(끝은 흰색)
 import * as THREE from '../../src/renderer/vendor/three.module.js';
+import { initAccessories } from '../../src/renderer/pet/accessories.js';
 
 export function createModel(container) {
   const W = container.clientWidth || 150;
@@ -511,8 +512,17 @@ export function createModel(container) {
   }
   frame();
 
+  // ---------- 액세서리 (설정에서 착탈) ----------
+  const accessories = initAccessories(headGroup, {
+    eyeX: 0.32, eyeY: 0.57, eyeZ: 0.84,
+    topY: 1.05, topZ: 0.05, topR: 0.72,
+    bandR: 0.97, bandY: 0.47, bandZ: 0.05, cupX: 0.99,
+    bow: [0.4, 1.12, 0.3],
+  });
+
   return {
     setAnimation,
+    setAccessories: accessories.setAccessories,
     rotateBy,
     endRotate,
     isRotated,

@@ -1,6 +1,7 @@
 // 곰돌이 3D — 두 발로 선 포근한 테디베어
 // 카라멜 브라운 털 + 크림색 주둥이·배·귀 안쪽, 동글 귀, 작은 눈, 타원 갈색 코
 import * as THREE from '../../src/renderer/vendor/three.module.js';
+import { initAccessories } from '../../src/renderer/pet/accessories.js';
 
 export function createModel(container) {
   const W = container.clientWidth || 150;
@@ -470,8 +471,17 @@ export function createModel(container) {
   }
   frame();
 
+  // ---------- 액세서리 (설정에서 착탈) ----------
+  const accessories = initAccessories(headGroup, {
+    eyeX: 0.32, eyeY: 0.56, eyeZ: 0.78,
+    topY: 1.02, topZ: 0.03, topR: 0.75,
+    bandR: 0.95, bandY: 0.45, bandZ: 0.05, cupX: 0.95,
+    bow: [0.42, 1.1, 0.32],
+  });
+
   return {
     setAnimation,
+    setAccessories: accessories.setAccessories,
     rotateBy,
     endRotate,
     isRotated,

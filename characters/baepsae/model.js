@@ -2,6 +2,7 @@
 // 핵심: 무늬는 몸 표면 텍스처에 붓으로 그리듯 그려 입히고,
 // 실루엣은 미세한 요철 + 역광 조명으로 보송한 솜털 느낌을 낸다
 import * as THREE from '../../src/renderer/vendor/three.module.js';
+import { initAccessories } from '../../src/renderer/pet/accessories.js';
 
 export function createModel(container) {
   const W = container.clientWidth || 150;
@@ -413,8 +414,22 @@ export function createModel(container) {
   }
   frame();
 
+  // ---------- 액세서리 (설정에서 착탈) — 헤드셋은 기본 착용이라 제외,
+  // 모자를 쓰면 기본 헤드셋을 잠시 벗는다
+  const accessories = initAccessories(bird, {
+    eyeX: 0.35, eyeY: 0.56, eyeZ: 1.12,
+    topY: 1.1, topZ: 0.1, topR: 0.8,
+    bow: [0.45, 1.25, 0.5],
+    exclude: ['headset'],
+  });
+  function setAccessories(list) {
+    const worn = accessories.setAccessories(list);
+    headset.visible = !worn.has('hat');
+  }
+
   return {
     setAnimation,
+    setAccessories,
     rotateBy,
     endRotate,
     isRotated,

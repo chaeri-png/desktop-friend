@@ -2,6 +2,7 @@
 // 눈 위까지 까만 머리 + 아래는 하얀색, 쫑긋 선 박쥐 귀, 납작 얼굴,
 // 넓적한 코, 주걱턱 아랫니, 매끈한 짧은 털, 꽁지 스텁
 import * as THREE from '../../src/renderer/vendor/three.module.js';
+import { initAccessories } from '../../src/renderer/pet/accessories.js';
 
 export function createModel(container) {
   const W = container.clientWidth || 150;
@@ -492,8 +493,17 @@ export function createModel(container) {
   }
   frame();
 
+  // ---------- 액세서리 (설정에서 착탈) ----------
+  const accessories = initAccessories(headGroup, {
+    eyeX: 0.44, eyeY: 0.5, eyeZ: 0.82,
+    topY: 1.0, topZ: 0.05, topR: 0.8,
+    bandR: 1.02, bandY: 0.44, bandZ: 0.05, cupX: 1.06,
+    bow: [0.42, 1.08, 0.3],
+  });
+
   return {
     setAnimation,
+    setAccessories: accessories.setAccessories,
     rotateBy,
     endRotate,
     isRotated,

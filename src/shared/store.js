@@ -8,6 +8,7 @@ export const DEFAULTS = {
   nagEnabled: true,
   nagIntervalMin: 45,
   character: 'baepsae',
+  accessories: {},
   autoStart: false,
   scheduleDate: null,
   schedule: [],

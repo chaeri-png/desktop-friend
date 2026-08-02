@@ -6,6 +6,9 @@ section { border: 1px solid #ddd; border-radius: 10px; padding: 14px 16px; margi
 label { display: block; margin: 6px 0; }
 input[type="number"] { width: 64px; }
 .row { display: flex; gap: 8px; margin-top: 8px; }
+.accRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0; }
+.accRow > span { color: #555; }
+.accRow label { display: inline-flex; align-items: center; gap: 3px; margin: 0; }
 #newText { flex: 1; }
 button { cursor: pointer; padding: 4px 12px; }
 #scheduleList { list-style: none; padding: 0; margin: 0 0 4px; }

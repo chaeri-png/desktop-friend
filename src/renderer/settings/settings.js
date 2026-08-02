@@ -23,6 +23,12 @@ function render() {
   FIELDS.forEach((f) => writeField(f, store[f]));
   $('character').value = store.character;
 
+  // 현재 캐릭터가 착용 중인 액세서리 체크 상태 반영
+  const worn = (store.accessories ?? {})[store.character] ?? [];
+  document.querySelectorAll('.acc').forEach((el) => {
+    el.checked = worn.includes(el.value);
+  });
+
   const ul = $('scheduleList');
   ul.innerHTML = '';
   for (const item of store.schedule) {
@@ -48,6 +54,14 @@ FIELDS.forEach((f) => {
 });
 
 $('character').addEventListener('change', () => set({ character: $('character').value }));
+
+// 액세서리는 캐릭터별로 따로 기억한다
+document.querySelectorAll('.acc').forEach((el) => {
+  el.addEventListener('change', () => {
+    const list = [...document.querySelectorAll('.acc:checked')].map((c) => c.value);
+    set({ accessories: { ...(store.accessories ?? {}), [store.character]: list } });
+  });
+});
 
 $('addItem').onclick = () => {
   const text = $('newText').value.trim();

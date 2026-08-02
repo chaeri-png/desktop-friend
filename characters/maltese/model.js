@@ -2,6 +2,7 @@
 // 온몸 풍성한 흰 털, 늘어진 귀, 정수리 털 뭉치, 까만 단추코, 분홍 혀,
 // 집중 시 책상에 앉아 자기 손으로 타이핑
 import * as THREE from '../../src/renderer/vendor/three.module.js';
+import { initAccessories } from '../../src/renderer/pet/accessories.js';
 
 export function createModel(container) {
   const W = container.clientWidth || 150;
@@ -491,8 +492,17 @@ export function createModel(container) {
   }
   frame();
 
+  // ---------- 액세서리 (설정에서 착탈) ----------
+  const accessories = initAccessories(headGroup, {
+    eyeX: 0.33, eyeY: 0.61, eyeZ: 0.84,
+    topY: 1.05, topZ: 0.05, topR: 0.78,
+    bandR: 1.0, bandY: 0.47, bandZ: 0.05, cupX: 1.02,
+    bow: [0.38, 1.12, 0.3],
+  });
+
   return {
     setAnimation,
+    setAccessories: accessories.setAccessories,
     rotateBy,
     endRotate,
     isRotated,

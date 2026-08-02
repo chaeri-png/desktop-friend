@@ -2,6 +2,7 @@
 // 흰 바탕 + 골드브라운 패치, 얼굴 가운데 흰 세로줄, 납작 주둥이 + 들창코,
 // 벌어진 동그란 눈, 혀 삐죽, 갈색 늘어진 귀, 등 위 플룸 꼬리
 import * as THREE from '../../src/renderer/vendor/three.module.js';
+import { initAccessories } from '../../src/renderer/pet/accessories.js';
 
 export function createModel(container) {
   const W = container.clientWidth || 150;
@@ -511,8 +512,17 @@ export function createModel(container) {
   }
   frame();
 
+  // ---------- 액세서리 (설정에서 착탈) ----------
+  const accessories = initAccessories(headGroup, {
+    eyeX: 0.42, eyeY: 0.55, eyeZ: 0.8,
+    topY: 1.05, topZ: 0.05, topR: 0.78,
+    bandR: 1.0, bandY: 0.47, bandZ: 0.05, cupX: 1.02,
+    bow: [0, 1.16, 0.4],
+  });
+
   return {
     setAnimation,
+    setAccessories: accessories.setAccessories,
     rotateBy,
     endRotate,
     isRotated,

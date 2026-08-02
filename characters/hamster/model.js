@@ -1,6 +1,7 @@
 // 햄스터 3D — 통통한 황금 햄스터
 // 볼록한 볼주머니, 동그란 귀, 가슴에 모은 앞발, 콩알 눈, 분홍 코, 꽁지 같은 꼬리
 import * as THREE from '../../src/renderer/vendor/three.module.js';
+import { initAccessories } from '../../src/renderer/pet/accessories.js';
 
 export function createModel(container) {
   const W = container.clientWidth || 150;
@@ -405,8 +406,17 @@ export function createModel(container) {
   }
   frame();
 
+  // ---------- 액세서리 (설정에서 착탈) — 햄스터는 머리·몸이 한 덩어리 ----------
+  const accessories = initAccessories(pet, {
+    eyeX: 0.38, eyeY: 0.45, eyeZ: 1.12,
+    topY: 0.9, topZ: 0.08, topR: 0.88,
+    bandR: 1.3, bandY: 0.4, bandZ: 0.1, cupX: 1.28,
+    bow: [0.55, 0.95, 0.55],
+  });
+
   return {
     setAnimation,
+    setAccessories: accessories.setAccessories,
     rotateBy,
     endRotate,
     isRotated,

@@ -35,7 +35,7 @@ export function createSettingsWindow() {
   const win = new BrowserWindow({
     width: 500,
     height: 680,
-    title: '뱁새 데스크펫 설정',
+    title: 'Desktop friend 설정',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs') },
   });
   win.setMenuBarVisibility(false);

@@ -6,7 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function createTray({ onToggle, onSettings, onStartTimer, onStopTimer }) {
   const tray = new Tray(path.join(__dirname, '../../assets/tray.png'));
-  tray.setToolTip('뱁새 데스크펫');
+  tray.setToolTip('Desktop friend by chaeri');
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: '펫 숨기기/보이기', click: onToggle },

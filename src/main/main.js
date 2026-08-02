@@ -313,7 +313,23 @@ function tick() {
 }
 
 // ---------- 시작 ----------
+// 앱 이름 변경(뱁새 데스크펫 → Desktop friend by chaeri) 시 기존 설정 자동 이전
+function migrateOldConfig() {
+  try {
+    const newFile = CONFIG_FILE();
+    if (fs.existsSync(newFile)) return;
+    const oldFile = path.join(app.getPath('userData'), '..', '뱁새 데스크펫', 'config.json');
+    if (fs.existsSync(oldFile)) {
+      fs.mkdirSync(path.dirname(newFile), { recursive: true });
+      fs.copyFileSync(oldFile, newFile);
+    }
+  } catch {
+    // 이전 실패는 무시 — 기본값으로 시작
+  }
+}
+
 app.whenReady().then(() => {
+  migrateOldConfig();
   protocol.handle('app', async (req) => {
     const { pathname } = new URL(req.url);
     const filePath = path.normalize(path.join(ROOT, decodeURIComponent(pathname)));

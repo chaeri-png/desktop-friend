@@ -485,7 +485,7 @@ export function createModel(container) {
     topY: 1.02, topZ: 0.03, topR: 0.75,
     bandR: 0.95, bandY: 0.45, bandZ: 0.05, cupX: 0.95,
     body: { cy: -0.55, rx: 0.85, ry: 0.95, rz: 0.85 },
-    sleeve: { x: 0.85, y: -0.46, z: 0.23, r: 0.21, rotZ: 0.38, len: 0.52 },
+    sleeve: { x: 0.75, y: -0.45, z: 0.22, r: 0.21, rotZ: 0.55, len: 0.6 },
     legX: 0.32, legY: -1.3, legR: 0.24,
   }, pet);
   accessoriesRef = accessories;

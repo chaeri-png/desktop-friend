@@ -147,16 +147,17 @@ function buildTshirt(fit) {
   shell.scale.set(b.rx * 1.07, b.ry * 1.07, b.rz * 1.07);
   shell.position.set(0, b.cy, 0);
   g.add(shell);
-  // 반소매: 팔 윗부분을 덮는 통 (집중 모드에선 팔이 앞으로 가므로 숨김)
+  // 반소매: 어깨(몸판 안쪽)에서 시작해 팔로 내려오는 막힌 원뿔형 래글런 소매
+  // (집중 모드에선 팔이 앞으로 가므로 숨김)
   if (fit.sleeve) {
     const s = fit.sleeve;
     for (const sign of [-1, 1]) {
       const sleeve = new THREE.Mesh(
-        new THREE.CylinderGeometry(s.r * 0.92, s.r * 1.15, s.len ?? 0.42, 18, 1, true),
+        new THREE.CylinderGeometry(s.r * 0.72, s.r * 1.2, s.len ?? 0.6, 18, 1, false),
         mat
       );
       sleeve.position.set(s.x * sign, s.y, s.z);
-      sleeve.rotation.set(-0.28, 0, (s.rotZ ?? 0.18) * sign);
+      sleeve.rotation.set(-0.28, 0, (s.rotZ ?? 0.55) * sign);
       sleeve.userData.hideOnFocus = true;
       g.add(sleeve);
     }

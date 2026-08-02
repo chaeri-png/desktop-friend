@@ -151,6 +151,20 @@ function buildTshirt(fit) {
     panel.position.set(0, b.cy, 0);
     g.add(panel);
   }
+  // 반소매: 팔 윗부분을 덮는 통 (집중 모드에선 팔이 앞으로 가므로 숨김)
+  if (fit.sleeve) {
+    const s = fit.sleeve;
+    for (const sign of [-1, 1]) {
+      const sleeve = new THREE.Mesh(
+        new THREE.CylinderGeometry(s.r * 0.92, s.r * 1.15, s.len ?? 0.42, 18, 1, true),
+        mat
+      );
+      sleeve.position.set(s.x * sign, s.y, s.z);
+      sleeve.rotation.set(-0.28, 0, (s.rotZ ?? 0.18) * sign);
+      sleeve.userData.hideOnFocus = true;
+      g.add(sleeve);
+    }
+  }
   const patch = makeSmilePatch(Math.min(0.26, b.rx * 0.3));
   patch.position.set(0, b.cy + b.ry * 0.28, b.rz * 1.07 * 0.97);
   patch.rotation.x = -0.28;
@@ -228,8 +242,19 @@ export function initAccessories(headParent, fit, bodyParent = headParent) {
         current.set(kind, obj);
       }
     }
+    setFocus(focusHidden);
     return want;
   }
 
-  return { setAccessories };
+  // 집중 모드에선 hideOnFocus 표시된 부품(반소매 등)을 숨긴다
+  let focusHidden = false;
+  function setFocus(focus) {
+    focusHidden = focus;
+    for (const obj of current.values())
+      obj.traverse((o) => {
+        if (o.userData?.hideOnFocus) o.visible = !focus;
+      });
+  }
+
+  return { setAccessories, setFocus };
 }

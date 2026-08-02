@@ -251,7 +251,9 @@ export function createModel(container) {
   }
 
   let shirtOn = false; // 티셔츠 착용 여부 — 입으면 팔을 소매 밖으로 뺀다
+  let accessoriesRef = null;
   function applyPose(focus) {
+    accessoriesRef?.setFocus(focus);
     for (const { arm, paw, sign } of armParts) {
       if (focus) {
         arm.position.set(0.5 * sign, -0.38, 0.38);
@@ -505,8 +507,10 @@ export function createModel(container) {
     // 늘어진 귀에 파묻히지 않게 이어컵을 귀 바깥으로
     bandR: 1.34, bandY: 0.52, bandZ: 0.1, cupX: 1.36,
     body: { cy: -0.55, rx: 0.82, ry: 0.92, rz: 0.76 },
+    sleeve: { x: 0.82, y: -0.36, z: 0.3, r: 0.2, rotZ: 0.18 },
     legX: 0.3, legY: -1.3, legR: 0.22,
   }, pet);
+  accessoriesRef = accessories;
   function setAccessories(list) {
     const worn = accessories.setAccessories(list);
     shirtOn = worn.has('tshirt');

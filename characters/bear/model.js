@@ -242,7 +242,9 @@ export function createModel(container) {
   }
 
   let shirtOn = false; // 티셔츠 착용 여부 — 입으면 팔을 소매 밖으로 뺀다
+  let accessoriesRef = null;
   function applyPose(focus) {
+    accessoriesRef?.setFocus(focus);
     for (const { armGroup, pad, sign } of armParts) {
       if (focus) {
         // 어깨에서 앞으로 뻗어 노트북 위에 손이 닿는 자세
@@ -483,8 +485,10 @@ export function createModel(container) {
     topY: 1.02, topZ: 0.03, topR: 0.75,
     bandR: 0.95, bandY: 0.45, bandZ: 0.05, cupX: 0.95,
     body: { cy: -0.55, rx: 0.85, ry: 0.95, rz: 0.85 },
+    sleeve: { x: 0.82, y: -0.4, z: 0.23, r: 0.21, rotZ: 0.28 },
     legX: 0.32, legY: -1.3, legR: 0.24,
   }, pet);
+  accessoriesRef = accessories;
   function setAccessories(list) {
     const worn = accessories.setAccessories(list);
     shirtOn = worn.has('tshirt');

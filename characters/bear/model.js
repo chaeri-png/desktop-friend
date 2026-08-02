@@ -241,6 +241,7 @@ export function createModel(container) {
     legParts.push({ leg, foot, sign });
   }
 
+  let shirtOn = false; // 티셔츠 착용 여부 — 입으면 팔을 소매 밖으로 뺀다
   function applyPose(focus) {
     for (const { armGroup, pad, sign } of armParts) {
       if (focus) {
@@ -248,6 +249,11 @@ export function createModel(container) {
         armGroup.position.set(0.5 * sign, -0.3, 0.18);
         armGroup.rotation.set(-1.2, 0, -0.12 * sign);
         pad.visible = false;
+      } else if (shirtOn) {
+        // 오버사이즈 티 밖으로 팔이 나온 자세 (어깨 넓게)
+        armGroup.position.set(0.92 * sign, -0.35, 0.18);
+        armGroup.rotation.set(-0.25, 0, 0.35 * sign);
+        pad.visible = true;
       } else {
         // 몸 옆에 자연스럽게 늘어뜨린 자세 (살짝 바깥·앞쪽으로)
         armGroup.position.set(0.66 * sign, -0.32, 0.16);
@@ -479,10 +485,15 @@ export function createModel(container) {
     body: { cy: -0.55, rx: 0.85, ry: 0.95, rz: 0.85 },
     legX: 0.32, legY: -1.3, legR: 0.24,
   }, pet);
+  function setAccessories(list) {
+    const worn = accessories.setAccessories(list);
+    shirtOn = worn.has('tshirt');
+    applyPose(anim === 'focus');
+  }
 
   return {
     setAnimation,
-    setAccessories: accessories.setAccessories,
+    setAccessories,
     rotateBy,
     endRotate,
     isRotated,

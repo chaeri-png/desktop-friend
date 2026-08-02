@@ -133,15 +133,24 @@ function makeSmilePatch(r) {
 
 function buildTshirt(fit) {
   // MZ st. 오버사이즈 티: 크림 바탕 + 가슴 스마일 와펜
+  // 양옆(팔 방향 ±x)에 암홀 틈을 남긴 앞판+뒤판 구조라 팔이 셔츠에 묻히지 않는다
   const b = fit.body;
   const g = new THREE.Group();
-  const shirt = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 40, 24, 0, Math.PI * 2, 0.5, 1.25),
-    new THREE.MeshStandardMaterial({ color: 0xf7f1e1, roughness: 0.95, side: THREE.DoubleSide })
-  );
-  shirt.scale.set(b.rx * 1.07, b.ry * 1.07, b.rz * 1.07);
-  shirt.position.set(0, b.cy, 0);
-  g.add(shirt);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xf7f1e1,
+    roughness: 0.95,
+    side: THREE.DoubleSide,
+  });
+  const gap = fit.armGap ?? 0.28; // 암홀 반각(라디안) — 팔 없는 캐릭터는 0으로
+  for (const phiStart of [gap, Math.PI + gap]) {
+    const panel = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 40, 24, phiStart, Math.PI - gap * 2, 0.5, 1.25),
+      mat
+    );
+    panel.scale.set(b.rx * 1.07, b.ry * 1.07, b.rz * 1.07);
+    panel.position.set(0, b.cy, 0);
+    g.add(panel);
+  }
   const patch = makeSmilePatch(Math.min(0.26, b.rx * 0.3));
   patch.position.set(0, b.cy + b.ry * 0.28, b.rz * 1.07 * 0.97);
   patch.rotation.x = -0.28;

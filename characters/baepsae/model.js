@@ -419,6 +419,8 @@ export function createModel(container) {
   const accessories = initAccessories(bird, {
     eyeX: 0.35, eyeY: 0.56, eyeZ: 1.12,
     topY: 1.1, topZ: 0.1, topR: 0.8,
+    // 달걀 몸이라 옷은 아랫배 쪽에 걸친다
+    body: { cy: -0.1, rx: 1.18, ry: 1.25, rz: 1.18 },
     exclude: ['headset'],
   });
   function setAccessories(list) {

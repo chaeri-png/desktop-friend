@@ -498,7 +498,9 @@ export function createModel(container) {
     topY: 1.05, topZ: 0.05, topR: 0.78,
     // 늘어진 귀에 파묻히지 않게 이어컵을 귀 바깥으로
     bandR: 1.34, bandY: 0.52, bandZ: 0.1, cupX: 1.36,
-  });
+    body: { cy: -0.55, rx: 0.82, ry: 0.92, rz: 0.76 },
+    legX: 0.3, legY: -1.3, legR: 0.22,
+  }, pet);
 
   return {
     setAnimation,

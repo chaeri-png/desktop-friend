@@ -498,7 +498,9 @@ export function createModel(container) {
     eyeX: 0.44, eyeY: 0.5, eyeZ: 0.82,
     topY: 1.0, topZ: 0.05, topR: 0.8,
     bandR: 1.02, bandY: 0.44, bandZ: 0.05, cupX: 1.06,
-  });
+    body: { cy: -0.55, rx: 0.88, ry: 0.92, rz: 0.8 },
+    legX: 0.32, legY: -1.3, legR: 0.25,
+  }, pet);
 
   return {
     setAnimation,

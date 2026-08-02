@@ -250,9 +250,9 @@ export function createModel(container) {
         armGroup.rotation.set(-1.2, 0, -0.12 * sign);
         pad.visible = false;
       } else if (shirtOn) {
-        // 오버사이즈 티 밖으로 팔이 나온 자세 (어깨 넓게)
-        armGroup.position.set(0.92 * sign, -0.35, 0.18);
-        armGroup.rotation.set(-0.25, 0, 0.35 * sign);
+        // 티셔츠 어깨선에 붙어 자연스럽게 늘어진 팔 (소매 밖)
+        armGroup.position.set(0.78 * sign, -0.3, 0.2);
+        armGroup.rotation.set(-0.22, 0, 0.28 * sign);
         pad.visible = true;
       } else {
         // 몸 옆에 자연스럽게 늘어뜨린 자세 (살짝 바깥·앞쪽으로)

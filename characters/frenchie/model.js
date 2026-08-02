@@ -271,10 +271,10 @@ export function createModel(container) {
         arm.rotation.set(-1.0, 0, -0.15 * sign);
         paw.position.set(0.3 * sign, -0.56, 0.76);
       } else if (shirtOn) {
-        // 오버사이즈 티 밖으로 팔이 나온 자세 (어깨 넓게)
-        arm.position.set(0.96 * sign, -0.52, 0.26);
-        arm.rotation.set(-0.35, 0, -0.12 * sign);
-        paw.position.set(0.88 * sign, -0.9, 0.46);
+        // 티셔츠 어깨선에 붙어 자연스럽게 늘어진 팔 (소매 밖)
+        arm.position.set(0.85 * sign, -0.45, 0.28);
+        arm.rotation.set(-0.3, 0, 0.18 * sign);
+        paw.position.set(0.93 * sign, -0.83, 0.42);
       } else {
         arm.position.set(0.6 * sign, -0.42, 0.28);
         arm.rotation.set(-0.4, 0, -0.3 * sign);

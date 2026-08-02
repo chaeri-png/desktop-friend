@@ -68,19 +68,23 @@ export function createModel(container) {
   headGroup.position.set(0, 0.35, 0);
   pet.add(headGroup);
 
-  // 머리 텍스처: 눈 위까지 까만색, 아래는 하얀색
+  // 머리 텍스처: 얼굴 전체 검정 + 가운데 세로 흰 줄(블레이즈) → 코 주변 동그란 흰 영역
   function makeHeadTexture() {
     const S = 512;
     const cv = document.createElement('canvas');
     cv.width = S;
     cv.height = S;
     const ctx = cv.getContext('2d');
-    ctx.fillStyle = '#fdfaf3';
+    ctx.fillStyle = '#2b2624'; // 얼굴 전체 검정
     ctx.fillRect(0, 0, S, S);
-    // 위쪽(정수리~눈 위) 까만 캡 — 경계는 부드럽게
-    ctx.filter = 'blur(9px)';
-    ctx.fillStyle = 'rgba(43,38,36,0.98)';
-    ctx.fillRect(-S, 0, S * 3, S * 0.3);
+    ctx.filter = 'blur(6px)';
+    ctx.fillStyle = 'rgba(253,250,243,0.97)';
+    // 이마를 가로지르는 세로 블레이즈 (정면 u=0.25)
+    ctx.fillRect(S * 0.225, 0, S * 0.05, S * 0.5);
+    // 코 주변 동그란 흰 영역 (블레이즈와 이어짐)
+    ctx.beginPath();
+    ctx.ellipse(S * 0.25, S * 0.5, S * 0.11, S * 0.1, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.filter = 'none';
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -105,7 +109,10 @@ export function createModel(container) {
     fluff(outerGeo, 0.01);
     const outer = new THREE.Mesh(outerGeo, black);
     outer.scale.set(0.75, 1.35, 0.4);
-    const inner = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 14), pinkMat);
+    const inner = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 18, 14),
+      new THREE.MeshStandardMaterial({ color: 0x1c1815, roughness: 0.95 }) // 귀 안쪽도 블랙
+    );
     inner.scale.set(0.65, 1.15, 0.3);
     inner.position.set(0, -0.03, 0.09);
     ear.add(outer, inner);
@@ -171,7 +178,27 @@ export function createModel(container) {
     headGroup.add(tooth);
   }
 
-  // ---------- 몸통: 다부진 가슴, 매끈한 흰 몸 ----------
+  // ---------- 몸통: 다부진 가슴, 흰 몸 + 검은 얼룩 ----------
+  function makeBodyTexture() {
+    const S = 512;
+    const cv = document.createElement('canvas');
+    cv.width = S;
+    cv.height = S;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fdfaf3';
+    ctx.fillRect(0, 0, S, S);
+    ctx.filter = 'blur(6px)';
+    const spot = 'rgba(43,38,36,0.95)';
+    blobOn(ctx, S, 0.62, 0.28, 0.1, 0.09, 0.3, spot); // 등 얼룩
+    blobOn(ctx, S, 0.87, 0.5, 0.08, 0.09, -0.2, spot); // 옆구리 얼룩
+    blobOn(ctx, S, 0.38, 0.62, 0.055, 0.05, 0.2, spot); // 앞쪽 작은 얼룩
+    blobOn(ctx, S, 0.08, 0.35, 0.06, 0.07, 0, spot); // 어깨 얼룩
+    ctx.filter = 'none';
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
+  }
   const bodyGeo = new THREE.SphereGeometry(0.85, 48, 32);
   {
     const pos = bodyGeo.attributes.position;
@@ -191,7 +218,10 @@ export function createModel(container) {
     }
   }
   fluff(bodyGeo, 0.008);
-  const body = new THREE.Mesh(bodyGeo, white);
+  const body = new THREE.Mesh(
+    bodyGeo,
+    new THREE.MeshStandardMaterial({ map: makeBodyTexture(), roughness: 0.95 })
+  );
   body.position.set(0, -0.55, 0);
   pet.add(body);
 

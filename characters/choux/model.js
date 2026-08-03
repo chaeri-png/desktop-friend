@@ -52,77 +52,101 @@ export function createModel(container) {
     geo.computeVertexNormals();
   }
 
-  // ---------- 몸: 원화 그대로의 구름 실루엣 (한 장짜리 곡면) ----------
-  // 몸통·정수리·양옆 봉우리 타원체 4개를 부드러운 최대값으로 융합해
-  // 이음새 없이 자연스럽게 이어지는 구름 곡면 하나를 만든다 (질감 균일)
-  const LOBES = [
-    { c: new THREE.Vector3(0, -0.35, 0), r: [1.62, 1.12, 1.1] }, // 넓고 둥근 아랫몸통
-    { c: new THREE.Vector3(0, 0.62, -0.02), r: [0.95, 0.88, 0.76] }, // 정수리 큰 돔
-    { c: new THREE.Vector3(-1.08, 0.22, -0.02), r: [0.68, 0.6, 0.56] }, // 왼쪽 봉우리
-    { c: new THREE.Vector3(1.08, 0.22, -0.02), r: [0.68, 0.6, 0.56] }, // 오른쪽 봉우리
+  // ---------- 몸: 원화 외곽선을 그대로 딴 실루엣을 도톰하게 부풀린 형태 ----------
+  // 정면 모습 = 원화와 동일. 진초록 테두리도 뒤판으로 재현한다.
+  const OUTLINE = [
+    [0, -1.3], [0.85, -1.16], [1.42, -0.6], [1.6, 0.1], [1.28, 0.66],
+    [0.97, 0.7], [0.78, 1.12], [0.05, 1.44], [-0.68, 1.18], [-0.93, 0.73],
+    [-1.28, 0.66], [-1.6, 0.08], [-1.4, -0.56], [-0.85, -1.16],
   ];
-  // 원점에서 방향 n으로 쐈을 때 타원체 표면까지의 거리
-  function rayEllipsoid(n, lobe) {
-    const [a, b, c2] = lobe.r;
-    const dx = n.x / a, dy = n.y / b, dz = n.z / c2;
-    const ox = -lobe.c.x / a, oy = -lobe.c.y / b, oz = -lobe.c.z / c2;
-    const A = dx * dx + dy * dy + dz * dz;
-    const B = 2 * (dx * ox + dy * oy + dz * oz);
-    const C = ox * ox + oy * oy + oz * oz - 1;
-    const D = B * B - 4 * A * C;
-    if (D <= 0) return 0;
-    return (-B + Math.sqrt(D)) / (2 * A);
+  function cloudShape(scale) {
+    const s = new THREE.Shape();
+    const pts = OUTLINE.map(([x, y]) => new THREE.Vector2(x * scale, y * scale));
+    s.moveTo(pts[0].x, pts[0].y);
+    s.splineThru(pts.slice(1));
+    s.closePath();
+    return s;
   }
-  const bodyGeo = new THREE.SphereGeometry(1, 80, 60);
+  // 원화 실루엣을 그대로 유지한 채 앞뒤로 둥글게 부풀린 3D 볼륨:
+  // 방위각별 외곽 반지름 R(θ)를 스플라인에서 뽑아, 구의 xy를 R(θ)로 늘리고 z는 쿠션처럼 둥글린다
+  const DEPTH = 0.95;
+  const R_BINS = 720;
+  const rTable = new Float32Array(R_BINS).fill(0);
   {
-    const K = 9; // 융합 강도 — 클수록 또렷, 작을수록 뭉툭
+    const pts = cloudShape(1).getPoints(512);
+    for (const p of pts) {
+      const a = Math.atan2(p.y, p.x);
+      const bin = ((Math.round((a / (Math.PI * 2)) * R_BINS) % R_BINS) + R_BINS) % R_BINS;
+      const r = Math.hypot(p.x, p.y);
+      if (r > rTable[bin]) rTable[bin] = r;
+    }
+    // 빈 구간은 이웃 값으로 채움
+    for (let k = 0; k < 3; k++)
+      for (let i = 0; i < R_BINS; i++)
+        if (!rTable[i]) rTable[i] = rTable[(i + R_BINS - 1) % R_BINS] || rTable[(i + 1) % R_BINS];
+    // 각도 샘플링 계단을 이동 평균으로 매끈하게
+    for (let pass = 0; pass < 2; pass++) {
+      const tmp = Float32Array.from(rTable);
+      for (let i = 0; i < R_BINS; i++) {
+        let s = 0;
+        for (let o = -4; o <= 4; o++) s += tmp[(i + o + R_BINS) % R_BINS];
+        rTable[i] = s / 9;
+      }
+    }
+  }
+  function outlineR(theta) {
+    const f = (((theta / (Math.PI * 2)) * R_BINS % R_BINS) + R_BINS) % R_BINS;
+    const i0 = Math.floor(f) % R_BINS;
+    const i1 = (i0 + 1) % R_BINS;
+    return rTable[i0] + (rTable[i1] - rTable[i0]) * (f - Math.floor(f));
+  }
+  const bodyGeo = new THREE.SphereGeometry(1, 96, 64);
+  {
     const pos = bodyGeo.attributes.position;
-    const n = new THREE.Vector3();
     for (let i = 0; i < pos.count; i++) {
-      n.set(pos.getX(i), pos.getY(i), pos.getZ(i)).normalize();
-      let acc = 0;
-      for (const lobe of LOBES) acc += Math.exp(K * rayEllipsoid(n, lobe));
-      const dist = Math.log(acc) / K; // smooth max
-      pos.setXYZ(i, n.x * dist, n.y * dist, n.z * dist);
+      const nx = pos.getX(i);
+      const ny = pos.getY(i);
+      const nz = pos.getZ(i);
+      const R = outlineR(Math.atan2(ny, nx));
+      pos.setXYZ(i, nx * R, ny * R, nz * DEPTH);
     }
     bodyGeo.computeVertexNormals();
   }
-  fluff(bodyGeo, 0.03);
   pet.add(new THREE.Mesh(bodyGeo, creamMat));
 
   // ---------- 얼굴 ----------
   // 점 눈 (초록, 오른쪽 눈이 살짝 큼 — 원화의 장난기)
   const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 18, 14), green);
   eyeL.scale.set(0.85, 1.15, 0.5);
-  eyeL.position.set(-0.3, 0.3, 1.02);
+  eyeL.position.set(-0.3, 0.3, 0.86);
   const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.125, 18, 14), green);
   eyeR.scale.set(0.85, 1.15, 0.5);
-  eyeR.position.set(0.3, 0.32, 1.02);
+  eyeR.position.set(0.3, 0.32, 0.86);
   pet.add(eyeL, eyeR);
 
   // 삐딱 눈썹 (오른쪽 눈 위)
   const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.2, 6, 10), green);
   brow.rotation.z = 1.35; // 살짝 기울인 일자 눈썹
-  brow.position.set(0.34, 0.62, 1.0);
+  brow.position.set(0.36, 0.64, 0.82);
   pet.add(brow);
 
   // 크게 웃는 입: 초록 테두리 + 분홍 속
   const mouthOuter = new THREE.Mesh(new THREE.SphereGeometry(0.42, 26, 20), green);
   mouthOuter.scale.set(1.45, 0.62, 0.3); // 옆으로 넓게 활짝 웃는 입
-  mouthOuter.position.set(0.02, -0.1, 1.06);
+  mouthOuter.position.set(0.02, -0.1, 0.88);
   const mouthInner = new THREE.Mesh(
     new THREE.SphereGeometry(0.32, 22, 16),
     new THREE.MeshStandardMaterial({ color: 0xc9968f, roughness: 0.9 })
   );
   mouthInner.scale.set(1.42, 0.56, 0.3);
-  mouthInner.position.set(0.02, -0.15, 1.14);
+  mouthInner.position.set(0.02, -0.15, 0.96);
   pet.add(mouthOuter, mouthInner);
 
   // 볼터치
   for (const sign of [-1, 1]) {
-    const blush = new THREE.Mesh(new THREE.CircleGeometry(0.22, 22), blushMat);
-    blush.position.set(0.72 * sign, 0.02, 0.92);
-    blush.rotation.y = 0.55 * sign;
+    const blush = new THREE.Mesh(new THREE.CircleGeometry(0.24, 22), blushMat);
+    blush.position.set(0.76 * sign, 0.05, 0.72);
+    blush.rotation.y = 0.35 * sign;
     pet.add(blush);
   }
 
@@ -130,7 +154,7 @@ export function createModel(container) {
   for (const sign of [-1, 1]) {
     const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.3, 6, 12), green);
     foot.rotation.z = 0.45 * sign;
-    foot.position.set(0.55 * sign, -1.42, 0.1);
+    foot.position.set(0.58 * sign, -1.42, 0.08);
     pet.add(foot);
   }
 
@@ -327,11 +351,11 @@ export function createModel(container) {
 
   // ---------- 액세서리 (설정에서 착탈) ----------
   const accessories = initAccessories(pet, {
-    eyeX: 0.3, eyeY: 0.31, eyeZ: 1.05,
-    topY: 1.15, topZ: -0.02, topR: 0.85,
-    bandR: 1.62, bandY: 0.15, bandZ: 0, cupX: 1.64,
-    // 구름 몸에 맞춘 옷 밴드
-    body: { cy: -0.55, rx: 1.5, ry: 1.12, rz: 1.05, shirtTheta: [1.1, 0.95], pantsTheta: [2.0, 0.6], patchY: -0.5, patchZ: 1.15 },
+    eyeX: 0.3, eyeY: 0.31, eyeZ: 0.88,
+    topY: 1.2, topZ: 0, topR: 0.85,
+    bandR: 1.62, bandY: 0.2, bandZ: 0, cupX: 1.64,
+    // 쿠션형 몸에 맞춘 옷 밴드
+    body: { cy: -0.55, rx: 1.55, ry: 1.15, rz: 0.92, shirtTheta: [1.1, 0.95], pantsTheta: [2.0, 0.6], patchY: -0.5, patchZ: 0.95 },
   }, pet);
   accessoriesRef = accessories;
   const setAccessories = accessories.setAccessories;

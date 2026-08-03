@@ -288,8 +288,8 @@ function tick() {
   if (event === 'rest-started') {
     state.pet = SM.send(state.pet, 'REST_START');
     notify('휴식 시간!', '잘했어요. 잠깐 쉬어가요 🎉');
-    say('야호! 쉬는 시간이다~ 🎉', 5000);
-    cheerUntil = now + 5000; // 5초간 신나는 환호 춤
+    say('야호! 쉬는 시간이다~ 🎉', 7000);
+    cheerUntil = now + 8000; // 8초간 신나는 환호 춤
     // 휴식 중간에 물 마시기 → 스트레칭을 권하며 직접 따라 한다
     restActs = [
       { at: now + Math.max(15000, state.timer.restMs / 3), kind: 'drink' },
@@ -307,8 +307,8 @@ function tick() {
   } else if (event === 'cycle-ended') {
     state.pet = SM.send(state.pet, 'TIMER_STOP');
     notify('사이클 완료', '뽀모도로 한 사이클이 끝났어요!');
-    say('야호! 다 끝났어요~ 또 할까요? 🎉', 5000);
-    cheerUntil = now + 5000;
+    say('야호! 다 끝났어요~ 또 할까요? 🎉', 7000);
+    cheerUntil = now + 8000;
     restActs = [];
     actUntil = 0;
     stopRoaming();
@@ -318,8 +318,8 @@ function tick() {
   if (state.pet.state === 'rest' && restActs.length && now >= restActs[0].at) {
     const act = restActs.shift();
     actAnim = act.kind;
-    actUntil = now + 7000;
-    say(pickFrom(act.kind === 'drink' ? DRINK_ACT_MESSAGES : STRETCH_ACT_MESSAGES), 6000);
+    actUntil = now + 10000;
+    say(pickFrom(act.kind === 'drink' ? DRINK_ACT_MESSAGES : STRETCH_ACT_MESSAGES), 9000);
   }
 
   // 유휴 랜덤 모션: idle일 때 낮은 확률로 3초간 idleFun 재생

@@ -52,20 +52,40 @@ export function createModel(container) {
     geo.computeVertexNormals();
   }
 
-  // ---------- 몸: 세 갈래 구름 블롭 (가운데 큰 몸 + 정수리·양옆 봉우리) ----------
-  function puff(r, sx, sy, sz, x, y, z, amp = 0.03) {
-    const geo = new THREE.SphereGeometry(r, 40, 30);
-    fluff(geo, amp);
-    const m = new THREE.Mesh(geo, creamMat);
-    m.scale.set(sx, sy, sz);
-    m.position.set(x, y, z);
-    pet.add(m);
-    return m;
+  // ---------- 몸: 한 덩어리 구름 블롭 (한 표면에 정수리·양옆 봉우리를 볼록하게) ----------
+  // 구 하나를 방향별로 부풀려 이음새 없이 매끈한 구름 실루엣을 만든다 — 질감도 전체 균일
+  const bodyGeo = new THREE.SphereGeometry(1.15, 64, 48);
+  {
+    const bumps = [
+      { d: new THREE.Vector3(0.02, 1, 0.06).normalize(), amp: 0.42, sig: 0.45 }, // 정수리 봉우리
+      { d: new THREE.Vector3(-0.88, 0.34, 0.06).normalize(), amp: 0.34, sig: 0.4 }, // 왼쪽 봉우리
+      { d: new THREE.Vector3(0.88, 0.34, 0.06).normalize(), amp: 0.34, sig: 0.4 }, // 오른쪽 봉우리
+    ];
+    const pos = bodyGeo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.set(pos.getX(i), pos.getY(i), pos.getZ(i));
+      // 1) 전체 비율 먼저: 옆으로 넓적하고 아래는 낮게 눌린 빵 실루엣
+      v.x *= 1.22;
+      v.y *= 0.88;
+      v.z *= 0.9;
+      if (v.y < 0) v.y *= 0.85;
+      // 2) 그 위에 또렷한 구름 봉우리를 얹는다 (봉우리 사이 골이 살아있게)
+      const n = v.clone().normalize();
+      let s = 1;
+      for (const b of bumps) {
+        const ang = Math.acos(Math.min(1, Math.max(-1, n.dot(b.d))));
+        s += b.amp * Math.exp(-(ang * ang) / (b.sig * b.sig));
+      }
+      v.multiplyScalar(s);
+      pos.setXYZ(i, v.x, v.y, v.z);
+    }
+    bodyGeo.computeVertexNormals();
   }
-  puff(1.15, 1.15, 0.98, 0.95, 0, -0.18, 0); // 중심 몸통
-  puff(0.74, 1, 1, 0.9, 0.02, 0.78, -0.02); // 정수리 봉우리
-  puff(0.62, 1, 1, 0.85, -0.98, 0.18, -0.02); // 왼쪽 봉우리
-  puff(0.62, 1, 1, 0.85, 0.98, 0.18, -0.02); // 오른쪽 봉우리
+  fluff(bodyGeo, 0.03);
+  const bodyMesh = new THREE.Mesh(bodyGeo, creamMat);
+  bodyMesh.position.set(0, -0.08, 0);
+  pet.add(bodyMesh);
 
   // ---------- 얼굴 ----------
   // 점 눈 (초록, 오른쪽 눈이 살짝 큼 — 원화의 장난기)
@@ -107,7 +127,7 @@ export function createModel(container) {
   for (const sign of [-1, 1]) {
     const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.3, 6, 12), green);
     foot.rotation.z = 0.45 * sign;
-    foot.position.set(0.52 * sign, -1.22, 0.08);
+    foot.position.set(0.52 * sign, -1.08, 0.08);
     pet.add(foot);
   }
 
@@ -153,7 +173,7 @@ export function createModel(container) {
     new THREE.MeshStandardMaterial({ color: 0xe05a4e, roughness: 0.7 })
   );
   headband.rotation.x = 1.35;
-  headband.position.set(0.02, 1.12, -0.02);
+  headband.position.set(0.02, 0.95, -0.02);
   headband.visible = false;
   pet.add(headband);
 

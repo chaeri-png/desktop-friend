@@ -52,40 +52,43 @@ export function createModel(container) {
     geo.computeVertexNormals();
   }
 
-  // ---------- 몸: 한 덩어리 구름 블롭 (한 표면에 정수리·양옆 봉우리를 볼록하게) ----------
-  // 구 하나를 방향별로 부풀려 이음새 없이 매끈한 구름 실루엣을 만든다 — 질감도 전체 균일
-  const bodyGeo = new THREE.SphereGeometry(1.15, 64, 48);
+  // ---------- 몸: 원화 그대로의 구름 실루엣 (한 장짜리 곡면) ----------
+  // 몸통·정수리·양옆 봉우리 타원체 4개를 부드러운 최대값으로 융합해
+  // 이음새 없이 자연스럽게 이어지는 구름 곡면 하나를 만든다 (질감 균일)
+  const LOBES = [
+    { c: new THREE.Vector3(0, -0.35, 0), r: [1.62, 1.12, 1.1] }, // 넓고 둥근 아랫몸통
+    { c: new THREE.Vector3(0, 0.62, -0.02), r: [0.95, 0.88, 0.76] }, // 정수리 큰 돔
+    { c: new THREE.Vector3(-1.08, 0.22, -0.02), r: [0.68, 0.6, 0.56] }, // 왼쪽 봉우리
+    { c: new THREE.Vector3(1.08, 0.22, -0.02), r: [0.68, 0.6, 0.56] }, // 오른쪽 봉우리
+  ];
+  // 원점에서 방향 n으로 쐈을 때 타원체 표면까지의 거리
+  function rayEllipsoid(n, lobe) {
+    const [a, b, c2] = lobe.r;
+    const dx = n.x / a, dy = n.y / b, dz = n.z / c2;
+    const ox = -lobe.c.x / a, oy = -lobe.c.y / b, oz = -lobe.c.z / c2;
+    const A = dx * dx + dy * dy + dz * dz;
+    const B = 2 * (dx * ox + dy * oy + dz * oz);
+    const C = ox * ox + oy * oy + oz * oz - 1;
+    const D = B * B - 4 * A * C;
+    if (D <= 0) return 0;
+    return (-B + Math.sqrt(D)) / (2 * A);
+  }
+  const bodyGeo = new THREE.SphereGeometry(1, 80, 60);
   {
-    const bumps = [
-      { d: new THREE.Vector3(0.02, 1, 0.06).normalize(), amp: 0.42, sig: 0.45 }, // 정수리 봉우리
-      { d: new THREE.Vector3(-0.88, 0.34, 0.06).normalize(), amp: 0.34, sig: 0.4 }, // 왼쪽 봉우리
-      { d: new THREE.Vector3(0.88, 0.34, 0.06).normalize(), amp: 0.34, sig: 0.4 }, // 오른쪽 봉우리
-    ];
+    const K = 9; // 융합 강도 — 클수록 또렷, 작을수록 뭉툭
     const pos = bodyGeo.attributes.position;
-    const v = new THREE.Vector3();
+    const n = new THREE.Vector3();
     for (let i = 0; i < pos.count; i++) {
-      v.set(pos.getX(i), pos.getY(i), pos.getZ(i));
-      // 1) 전체 비율 먼저: 옆으로 넓적하고 아래는 낮게 눌린 빵 실루엣
-      v.x *= 1.22;
-      v.y *= 0.88;
-      v.z *= 0.9;
-      if (v.y < 0) v.y *= 0.85;
-      // 2) 그 위에 또렷한 구름 봉우리를 얹는다 (봉우리 사이 골이 살아있게)
-      const n = v.clone().normalize();
-      let s = 1;
-      for (const b of bumps) {
-        const ang = Math.acos(Math.min(1, Math.max(-1, n.dot(b.d))));
-        s += b.amp * Math.exp(-(ang * ang) / (b.sig * b.sig));
-      }
-      v.multiplyScalar(s);
-      pos.setXYZ(i, v.x, v.y, v.z);
+      n.set(pos.getX(i), pos.getY(i), pos.getZ(i)).normalize();
+      let acc = 0;
+      for (const lobe of LOBES) acc += Math.exp(K * rayEllipsoid(n, lobe));
+      const dist = Math.log(acc) / K; // smooth max
+      pos.setXYZ(i, n.x * dist, n.y * dist, n.z * dist);
     }
     bodyGeo.computeVertexNormals();
   }
   fluff(bodyGeo, 0.03);
-  const bodyMesh = new THREE.Mesh(bodyGeo, creamMat);
-  bodyMesh.position.set(0, -0.08, 0);
-  pet.add(bodyMesh);
+  pet.add(new THREE.Mesh(bodyGeo, creamMat));
 
   // ---------- 얼굴 ----------
   // 점 눈 (초록, 오른쪽 눈이 살짝 큼 — 원화의 장난기)
@@ -127,7 +130,7 @@ export function createModel(container) {
   for (const sign of [-1, 1]) {
     const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.3, 6, 12), green);
     foot.rotation.z = 0.45 * sign;
-    foot.position.set(0.52 * sign, -1.08, 0.08);
+    foot.position.set(0.55 * sign, -1.42, 0.1);
     pet.add(foot);
   }
 
@@ -173,7 +176,7 @@ export function createModel(container) {
     new THREE.MeshStandardMaterial({ color: 0xe05a4e, roughness: 0.7 })
   );
   headband.rotation.x = 1.35;
-  headband.position.set(0.02, 0.95, -0.02);
+  headband.position.set(0, 1.15, -0.02);
   headband.visible = false;
   pet.add(headband);
 
@@ -325,10 +328,10 @@ export function createModel(container) {
   // ---------- 액세서리 (설정에서 착탈) ----------
   const accessories = initAccessories(pet, {
     eyeX: 0.3, eyeY: 0.31, eyeZ: 1.05,
-    topY: 1.1, topZ: -0.02, topR: 0.82,
-    bandR: 1.5, bandY: 0.22, bandZ: 0, cupX: 1.5,
+    topY: 1.15, topZ: -0.02, topR: 0.85,
+    bandR: 1.62, bandY: 0.15, bandZ: 0, cupX: 1.64,
     // 구름 몸에 맞춘 옷 밴드
-    body: { cy: -0.4, rx: 1.32, ry: 1.1, rz: 1.06, shirtTheta: [1.1, 0.95], pantsTheta: [2.0, 0.6], patchY: -0.35, patchZ: 1.2 },
+    body: { cy: -0.55, rx: 1.5, ry: 1.12, rz: 1.05, shirtTheta: [1.1, 0.95], pantsTheta: [2.0, 0.6], patchY: -0.5, patchZ: 1.15 },
   }, pet);
   accessoriesRef = accessories;
   const setAccessories = accessories.setAccessories;

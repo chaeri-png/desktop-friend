@@ -355,6 +355,7 @@ export function createModel(container) {
   function setAnimation(name) {
     if (name === anim) return;
     anim = name;
+    accessoriesRef?.setAct?.(name === 'cheer' ? 'dance' : name === 'drink' ? 'bottle' : null);
     const focus = name === 'focus';
     laptop.visible = focus;
     desk.visible = focus;
@@ -480,6 +481,23 @@ export function createModel(container) {
       armParts[1].armGroup.rotation.x = -1.2 + Math.max(0, Math.sin(t * 7.5 + Math.PI)) * 0.1;
     }
 
+    // 연기 팔동작: 환호(양팔 위로 흔들기)·물마시기(오른팔로 병 들기)·스트레칭(양팔 위로)
+    if (anim === 'cheer') {
+      for (const p of armParts) {
+        const wave = Math.sin(t * 9 + (p.sign > 0 ? 0 : Math.PI)) * 0.22;
+        p.armGroup.position.set(0.6 * p.sign, -0.05, 0.4);
+        p.armGroup.rotation.set(0, 0, Math.PI - 0.35 * p.sign + wave);
+      }
+    } else if (anim === 'drink') {
+      const r = armParts[1];
+      r.armGroup.position.set(0.42, 0.02, 0.3);
+      r.armGroup.rotation.set(-2.3, 0, -0.4);
+    } else if (anim === 'stretch') {
+      for (const p of armParts) {
+        p.armGroup.position.set(0.55 * p.sign, -0.02, 0.4);
+        p.armGroup.rotation.set(0, 0, Math.PI - 0.25 * p.sign);
+      }
+    }
     pivot.rotation.y = userYaw;
     pivot.rotation.x = userPitch;
 

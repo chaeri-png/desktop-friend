@@ -294,6 +294,50 @@ const BUILDERS = {
   pants: buildPants,
 };
 
+// ---------- 연기용 소품 (설정과 무관, 애니메이션 중에만 등장) ----------
+// 선글라스: 환호 춤 출 때 씀
+function buildSunglasses(fit) {
+  const g = new THREE.Group();
+  const dark = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.3 });
+  const lensR = Math.min(0.3, fit.eyeX * 0.85) * 1.15;
+  for (const sign of [-1, 1]) {
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(lensR, 24), dark);
+    lens.position.set(fit.eyeX * sign, fit.eyeY, fit.eyeZ + 0.1);
+    g.add(lens);
+    const temple = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.45, 8), dark);
+    temple.rotation.x = Math.PI / 2;
+    temple.position.set((fit.eyeX + lensR) * sign, fit.eyeY + 0.03, fit.eyeZ - 0.14);
+    g.add(temple);
+  }
+  // 위쪽 일자 프레임 바
+  const bar = new THREE.Mesh(
+    new THREE.BoxGeometry(fit.eyeX * 2 + lensR * 1.4, 0.05, 0.03),
+    dark
+  );
+  bar.position.set(0, fit.eyeY + lensR * 0.8, fit.eyeZ + 0.09);
+  g.add(bar);
+  return g;
+}
+
+// 물병: 물 마시기 연기 때 입가에 기울여 든다
+function buildBottle(fit) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.09, 0.09, 0.3, 14),
+    new THREE.MeshStandardMaterial({ color: 0x9ed2f0, roughness: 0.3, transparent: true, opacity: 0.85 })
+  );
+  const cap = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.07, 12),
+    new THREE.MeshStandardMaterial({ color: 0xf5f5f2, roughness: 0.6 })
+  );
+  cap.position.y = 0.18;
+  g.add(body, cap);
+  const [bx, by, bz] = fit.bottle ?? [0.3, fit.eyeY - 0.28, fit.eyeZ + 0.16];
+  g.position.set(bx, by, bz);
+  g.rotation.z = 0.55; // 입 쪽으로 기울여 꿀꺽
+  return g;
+}
+
 // 옷(티셔츠·후드티·바지)은 몸통 좌표, 나머지는 머리 좌표에 붙는다
 const BODY_KINDS = new Set(['tshirt', 'hoodie', 'pants']);
 
@@ -342,5 +386,15 @@ export function initAccessories(headParent, fit, bodyParent = headParent) {
       });
   }
 
-  return { setAccessories, setFocus };
+  // 연기 소품 토글: 'dance'(선글라스) | 'bottle'(물병) | null(모두 숨김)
+  const actProps = {};
+  function setAct(kind) {
+    if (kind && !actProps[kind]) {
+      actProps[kind] = kind === 'dance' ? buildSunglasses(fit) : buildBottle(fit);
+      headAcc.add(actProps[kind]);
+    }
+    for (const [k, obj] of Object.entries(actProps)) obj.visible = k === kind;
+  }
+
+  return { setAccessories, setFocus, setAct };
 }

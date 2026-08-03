@@ -1,7 +1,7 @@
 {
   "name": "baepsae-deskpet",
   "productName": "Desktop friend by chaeri",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "픽사 팀 데스크펫 — 뽀모도로와 하루 일과를 함께하는 뱁새",
   "type": "module",
   "main": "src/main/main.js",

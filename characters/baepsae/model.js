@@ -267,9 +267,11 @@ export function createModel(container) {
   const clock = new THREE.Clock();
   let disposed = false;
 
+  let accessoriesRef = null;
   function setAnimation(name) {
     if (name === anim) return;
     anim = name;
+    accessoriesRef?.setAct?.(name === 'cheer' ? 'dance' : name === 'drink' ? 'bottle' : null);
     laptop.visible = name === 'focus';
     if (name === 'react' || name === 'cheer') jumpStart = t;
     const s = name === 'drag' ? 1.3 : 1;
@@ -405,6 +407,7 @@ export function createModel(container) {
     body: { cy: -0.3, rx: 1.42, ry: 1.32, rz: 1.45, shirtTheta: [1.25, 0.88], pantsTheta: [2.05, 0.58], patchY: -0.28 },
   });
   const setAccessories = accessories.setAccessories;
+  accessoriesRef = accessories;
 
   return {
     setAnimation,

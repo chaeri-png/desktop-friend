@@ -283,9 +283,11 @@ export function createModel(container) {
   const clock = new THREE.Clock();
   let disposed = false;
 
+  let accessoriesRef = null;
   function setAnimation(name) {
     if (name === anim) return;
     anim = name;
+    accessoriesRef?.setAct?.(name === 'cheer' ? 'dance' : name === 'drink' ? 'bottle' : null);
     headband.visible = name === 'focus';
     laptop.visible = name === 'focus';
     // 집중 중엔 가슴 앞발 대신 키보드 위 타이핑 손이 보임
@@ -425,7 +427,7 @@ export function createModel(container) {
 
   return {
     setAnimation,
-    setAccessories: accessories.setAccessories,
+    setAccessories: (accessoriesRef = accessories, accessories.setAccessories),
     rotateBy,
     endRotate,
     isRotated,

@@ -1,0 +1,29 @@
+# 맥용 설치 파일(dmg) 자동 빌드
+# 사용법: GitHub 저장소 → Actions 탭 → "Mac 빌드 (dmg)" → Run workflow 버튼
+name: Mac 빌드 (dmg)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      # 서명 인증서 없이 빌드 (팀 내부 배포용)
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 의존성 설치
+        run: npm ci
+      - name: 아이콘 생성
+        run: npm run icons
+      - name: dmg 빌드
+        run: npm run dist:mac
+      - name: dmg 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: Desktop-friend-by-chaeri-mac
+          path: release/*.dmg

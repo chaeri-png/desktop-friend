@@ -354,8 +354,8 @@ function buildBottle(fit) {
   );
   cap.position.y = 0.29;
   g.add(body, label, cap);
-  // 병 입구(캡)가 입 높이(눈보다 한참 아래)에 오도록 배치
-  const [bx, by, bz] = fit.bottle ?? [0.34, fit.eyeY - 0.5, fit.eyeZ + 0.22];
+  // 병 입구(캡)가 입 높이(코 아래)에 오도록 배치
+  const [bx, by, bz] = fit.bottle ?? [0.3, fit.eyeY - 0.66, fit.eyeZ + 0.22];
   g.position.set(bx, by, bz);
   g.rotation.z = 0.85; // 입 쪽으로 푹 기울여 꿀꺽
   return g;

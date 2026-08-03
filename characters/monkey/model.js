@@ -241,12 +241,13 @@ export function createModel(container) {
   }
 
   let shirtOn = false; // 티셔츠 착용 여부 — 입으면 팔을 소매 밖으로 뺀다
+  let actBusy = false; // 팔 쓰는 연기 중 (소매 잠깐 숨김)
   let accessoriesRef = null;
   function applyPose(focus) {
-    accessoriesRef?.setFocus(focus);
+    accessoriesRef?.setFocus(focus || actBusy);
     for (const { armGroup, sign } of armParts) {
       if (focus) {
-        armGroup.position.set(0.5 * sign, -0.3, 0.18);
+        armGroup.position.set(0.5 * sign, -0.3, 0.18 + (shirtOn ? 0.25 : 0));
         armGroup.rotation.set(-1.2, 0, -0.12 * sign);
       } else if (shirtOn) {
         armGroup.position.set(0.78 * sign, -0.3, 0.2);
@@ -361,6 +362,7 @@ export function createModel(container) {
     if (name === anim) return;
     anim = name;
     accessoriesRef?.setAct?.(name === 'cheer' ? 'dance' : name === 'drink' ? 'bottle' : null);
+    actBusy = name === 'focus' || name === 'cheer' || name === 'drink' || name === 'stretch';
     const focus = name === 'focus';
     laptop.visible = focus;
     desk.visible = focus;
@@ -492,16 +494,16 @@ export function createModel(container) {
     if (anim === 'cheer') {
       for (const p of armParts) {
         const wave = Math.sin(t * 9 + (p.sign > 0 ? 0 : Math.PI)) * 0.22;
-        p.armGroup.position.set(0.6 * p.sign, -0.05, 0.4);
+        p.armGroup.position.set(0.6 * p.sign, -0.05, shirtOn ? 0.62 : 0.4);
         p.armGroup.rotation.set(0, 0, Math.PI - 0.35 * p.sign + wave);
       }
     } else if (anim === 'drink') {
       const r = armParts[1];
-      r.armGroup.position.set(0.42, 0.02, 0.3);
+      r.armGroup.position.set(0.42, 0.02, shirtOn ? 0.55 : 0.3);
       r.armGroup.rotation.set(-2.3, 0, -0.4);
     } else if (anim === 'stretch') {
       for (const p of armParts) {
-        p.armGroup.position.set(0.55 * p.sign, -0.02, 0.4);
+        p.armGroup.position.set(0.55 * p.sign, -0.02, shirtOn ? 0.62 : 0.4);
         p.armGroup.rotation.set(0, 0, Math.PI - 0.25 * p.sign);
       }
     }

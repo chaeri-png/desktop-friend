@@ -251,14 +251,15 @@ export function createModel(container) {
   }
 
   let shirtOn = false; // 티셔츠 착용 여부 — 입으면 팔을 소매 밖으로 뺀다
+  let actBusy = false; // 팔 쓰는 연기 중 (소매 잠깐 숨김)
   let accessoriesRef = null;
   function applyPose(focus) {
-    accessoriesRef?.setFocus(focus);
+    accessoriesRef?.setFocus(focus || actBusy);
     for (const { arm, paw, sign } of armParts) {
       if (focus) {
-        arm.position.set(0.5 * sign, -0.38, 0.38);
+        arm.position.set(0.5 * sign, -0.38, 0.38 + (shirtOn ? 0.25 : 0));
         arm.rotation.set(-1.0, 0, -0.15 * sign);
-        paw.position.set(0.3 * sign, -0.56, 0.76);
+        paw.position.set(0.3 * sign, -0.56, 0.76 + (shirtOn ? 0.25 : 0));
       } else if (shirtOn) {
         // 티셔츠 어깨선에 붙어 자연스럽게 늘어진 팔 (소매 밖)
         arm.position.set(0.8 * sign, -0.45, 0.3);
@@ -375,6 +376,7 @@ export function createModel(container) {
     if (name === anim) return;
     anim = name;
     accessoriesRef?.setAct?.(name === 'cheer' ? 'dance' : name === 'drink' ? 'bottle' : null);
+    actBusy = name === 'focus' || name === 'cheer' || name === 'drink' || name === 'stretch';
     const focus = name === 'focus';
     laptop.visible = focus;
     desk.visible = focus;
@@ -506,20 +508,20 @@ export function createModel(container) {
     if (anim === 'cheer') {
       for (const p of armParts) {
         const wave = Math.sin(t * 9 + (p.sign > 0 ? 0 : Math.PI)) * 0.12;
-        p.arm.position.set(0.55 * p.sign, 0.35, 0.42);
+        p.arm.position.set(0.55 * p.sign, 0.35, shirtOn ? 0.66 : 0.42);
         p.arm.rotation.set(0, 0, -0.5 * p.sign);
-        p.paw.position.set(0.8 * p.sign, 0.78 + wave, 0.5);
+        p.paw.position.set(0.8 * p.sign, 0.78 + wave, shirtOn ? 0.74 : 0.5);
       }
     } else if (anim === 'drink') {
       const r = armParts[1];
-      r.arm.position.set(0.4, 0.1, 0.5);
+      r.arm.position.set(0.4, 0.1, shirtOn ? 0.72 : 0.5);
       r.arm.rotation.set(-0.9, 0, -0.6);
-      r.paw.position.set(0.2, 0.42, 0.8);
+      r.paw.position.set(0.2, 0.42, shirtOn ? 0.98 : 0.8);
     } else if (anim === 'stretch') {
       for (const p of armParts) {
-        p.arm.position.set(0.45 * p.sign, 0.45, 0.4);
+        p.arm.position.set(0.45 * p.sign, 0.45, shirtOn ? 0.62 : 0.4);
         p.arm.rotation.set(0, 0, -0.25 * p.sign);
-        p.paw.position.set(0.56 * p.sign, 0.9, 0.45);
+        p.paw.position.set(0.56 * p.sign, 0.9, shirtOn ? 0.68 : 0.45);
       }
     }
     pivot.rotation.y = userYaw;

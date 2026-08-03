@@ -14,9 +14,9 @@
   - 더블클릭: ①돌려둔 상태면 정면 복귀 ②휴식 로밍 중이면 제자리 복귀 ③그 외엔 현재 일과 완료
   - 집중 중엔 노트북 타이핑, 휴식 시작·사이클 완료 때 "야호" 환호(3초) 후 춤
   - `character.json`의 `"type": "3d"`로 3D/2D 분기 (2D 캐릭터 팩은 기존 방식 그대로 동작)
-  - 3D 캐릭터 팩 = `characters/<이름>/character.json` + `model.js` (`createModel(container)` export). 현재 8종: 뱁새(과묵·다정·헤드셋), 햄스터(발랄·응원), 치즈냥(예의바른데 할 말은 함), 말티즈 '비누'(퍼피컷 뽀글이, 사나움+심드렁+먹보, '주인' 단어 금지), 시츄 '탱이'(진한 브라운 투톤, 유유자적+간식 사랑, 물결 말투), 프렌치 불독 '테리'(눈 위 검정+아래 흰색, 박쥐 귀, 헬스 트레이너 톤), 곰돌이(테디베어, 포근한 위로형), 원숭이(크림 얼굴판+옆 동글귀+말린 꼬리, 장난꾸러기+바나나). 두 발 캐릭터는 집중 시 책상에서 직접 타이핑
+  - 3D 캐릭터 팩 = `characters/<이름>/character.json` + `model.js` (`createModel(container)` export). 현재 8종: 뱁새(과묵·다정), 햄스터(발랄·응원), 치즈냥(예의바른데 할 말은 함), 말티즈 '비누'(퍼피컷 뽀글이, 사나움+심드렁+먹보, '주인' 단어 금지), 시츄 '탱이'(진한 브라운 투톤, 유유자적+간식 사랑, 물결 말투), 프렌치 불독 '테리'(눈 위 검정+아래 흰색, 박쥐 귀, 헬스 트레이너 톤), 곰돌이(테디베어, 포근한 위로형), 원숭이(크림 얼굴판+옆 동글귀+말린 꼬리, 장난꾸러기+바나나). 두 발 캐릭터는 집중 시 책상에서 직접 타이핑
   - 대사는 character.json의 `lines` — `{any, morning, lunch, afternoon, evening, night}` 시간대별 구조, `{name}`·`{emoji}` 치환 지원
-  - **액세서리 시스템**: `src/renderer/pet/accessories.js` (안경·빨간 타원 안경·헤드셋·파란 볼캡). 각 model.js가 `initAccessories(머리그룹, fit)` 호출 후 `setAccessories`를 노출. fit = 캐릭터별 머리 치수(눈 위치·정수리·밴드 반지름). 설정 창 체크박스로 착탈, `config.accessories = { 캐릭터명: [종류...] }`로 캐릭터별 저장. 뱁새는 기본 헤드셋이 있어 headset 제외(`exclude`), 모자 쓰면 기본 헤드셋 자동 숨김. 탱이·비누는 늘어진 귀 때문에 이어컵을 귀 바깥(cupX 1.3대)으로 뺌
+  - **액세서리 시스템**: `src/renderer/pet/accessories.js` (안경·빨간 타원 안경·헤드셋·파란 볼캡). 각 model.js가 `initAccessories(머리그룹, fit)` 호출 후 `setAccessories`를 노출. fit = 캐릭터별 머리 치수(눈 위치·정수리·밴드 반지름). 설정 창 체크박스로 착탈, `config.accessories = { 캐릭터명: [종류...] }`로 캐릭터별 저장. 탱이·비누는 늘어진 귀 때문에 이어컵을 귀 바깥(cupX 1.3대)으로 뺌. 뱁새 기본 헤드셋은 제거됨(액세서리 옵션으로 대체)
   - 모델 확인용 스냅샷: `BAEPSAE_SNAP=1`로 실행하면 정면/옆/뒷모습 PNG가 프로젝트 루트에 저장됨
   - three.js는 `src/renderer/vendor/three.module.js`로 벤더링(번들러 없음)
 - 남은 확인: Windows에서 눈으로 직접 동작 확인, 설치 파일 재빌드(`npm run icons` 후 `npm run dist:win` — 현재 exe는 2D 시절 빌드), Mac 팀원 기기에서 `npm run dist:mac` 빌드

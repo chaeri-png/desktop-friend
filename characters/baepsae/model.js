@@ -249,30 +249,7 @@ export function createModel(container) {
   laptop.visible = false;
   bird.add(laptop);
 
-  // ---------- 헤드셋 (항상 착용 — 작업하는 새) ----------
-  const headset = new THREE.Group();
-  {
-    // 애플 헤드셋 느낌: 베이지 패브릭 밴드 + 알루미늄 이어컵 (노트북과 세트)
-    const fabric = new THREE.MeshStandardMaterial({ color: 0xbfb7ac, roughness: 1 });
-    const alu = new THREE.MeshStandardMaterial({ color: 0xd7d3ce, roughness: 0.5 });
-    const pad = new THREE.MeshStandardMaterial({ color: 0xa89f93, roughness: 0.9 });
-    // 머리 위를 넘어가는 밴드 (반원)
-    const band = new THREE.Mesh(new THREE.TorusGeometry(1.28, 0.08, 12, 40, Math.PI), fabric);
-    band.scale.y = 0.78;
-    band.position.set(0, 0.5, 0.1);
-    headset.add(band);
-    // 양쪽 이어컵(알루미늄) + 바깥 패드 포인트
-    for (const sign of [-1, 1]) {
-      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.16, 24), alu);
-      cup.rotation.z = Math.PI / 2;
-      cup.position.set(1.24 * sign, 0.5, 0.1);
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.03, 20), pad);
-      cap.rotation.z = Math.PI / 2;
-      cap.position.set((1.24 + 0.09) * sign, 0.5, 0.1);
-      headset.add(cup, cap);
-    }
-  }
-  bird.add(headset);
+  // (기본 헤드셋은 제거 — 설정의 헤드셋 액세서리로 착용 가능)
 
   // ---------- 애니메이션 상태 ----------
   let anim = 'idle';
@@ -414,19 +391,16 @@ export function createModel(container) {
   }
   frame();
 
-  // ---------- 액세서리 (설정에서 착탈) — 헤드셋은 기본 착용이라 제외,
-  // 모자를 쓰면 기본 헤드셋을 잠시 벗는다
+  // ---------- 액세서리 (설정에서 착탈) ----------
   const accessories = initAccessories(bird, {
     eyeX: 0.35, eyeY: 0.56, eyeZ: 1.12,
     topY: 1.1, topZ: 0.1, topR: 0.8,
+    // 헤드셋: 예전 기본 헤드셋과 같은 치수
+    bandR: 1.28, bandY: 0.5, bandZ: 0.1, cupX: 1.24,
     // 달걀 몸(아래로 갈수록 통통)에 맞춘 옷 밴드 — 배 최대 폭 ~1.45
     body: { cy: -0.3, rx: 1.42, ry: 1.32, rz: 1.45, shirtTheta: [1.25, 0.88], pantsTheta: [2.05, 0.58], patchY: -0.28 },
-    exclude: ['headset'],
   });
-  function setAccessories(list) {
-    const worn = accessories.setAccessories(list);
-    headset.visible = !worn.has('hat');
-  }
+  const setAccessories = accessories.setAccessories;
 
   return {
     setAnimation,

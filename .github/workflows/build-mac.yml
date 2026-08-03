@@ -21,7 +21,8 @@ jobs:
       - name: 아이콘 생성
         run: npm run icons
       - name: dmg 빌드
-        run: npm run dist:mac
+        # --publish never: CI에서 릴리스 자동 게시 시도 안 함 (dmg 파일만 생성)
+        run: npm run dist:mac -- --publish never
       - name: dmg 업로드
         uses: actions/upload-artifact@v4
         with:

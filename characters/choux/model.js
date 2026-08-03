@@ -84,13 +84,13 @@ export function createModel(container) {
     for (let k = 0; k < 3; k++)
       for (let i = 0; i < R_BINS; i++)
         if (!rTable[i]) rTable[i] = rTable[(i + R_BINS - 1) % R_BINS] || rTable[(i + 1) % R_BINS];
-    // 각도 샘플링 계단을 이동 평균으로 매끈하게
-    for (let pass = 0; pass < 2; pass++) {
+    // 각도 샘플링 계단·이음새 갈라짐을 이동 평균으로 매끈하게 (여러 번 부드럽게)
+    for (let pass = 0; pass < 4; pass++) {
       const tmp = Float32Array.from(rTable);
       for (let i = 0; i < R_BINS; i++) {
         let s = 0;
-        for (let o = -4; o <= 4; o++) s += tmp[(i + o + R_BINS) % R_BINS];
-        rTable[i] = s / 9;
+        for (let o = -7; o <= 7; o++) s += tmp[(i + o + R_BINS) % R_BINS];
+        rTable[i] = s / 15;
       }
     }
   }
@@ -108,7 +108,8 @@ export function createModel(container) {
       const ny = pos.getY(i);
       const nz = pos.getZ(i);
       const R = outlineR(Math.atan2(ny, nx));
-      pos.setXYZ(i, nx * R, ny * R, nz * DEPTH);
+      // 위아래로 살짝 눌러 더 넓적하고 귀엽게
+      pos.setXYZ(i, nx * R, ny * R * 0.92, nz * DEPTH);
     }
     bodyGeo.computeVertexNormals();
   }
@@ -116,19 +117,21 @@ export function createModel(container) {
 
   // ---------- 얼굴 ----------
   // 점 눈 (초록, 오른쪽 눈이 살짝 큼 — 원화의 장난기)
-  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 18, 14), green);
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.115, 18, 14), green);
   eyeL.scale.set(0.85, 1.15, 0.5);
-  eyeL.position.set(-0.3, 0.3, 0.86);
-  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.125, 18, 14), green);
+  eyeL.position.set(-0.3, 0.31, 0.86);
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.115, 18, 14), green);
   eyeR.scale.set(0.85, 1.15, 0.5);
-  eyeR.position.set(0.3, 0.32, 0.86);
+  eyeR.position.set(0.3, 0.31, 0.86);
   pet.add(eyeL, eyeR);
 
-  // 삐딱 눈썹 (오른쪽 눈 위)
-  const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.2, 6, 10), green);
-  brow.rotation.z = 1.35; // 살짝 기울인 일자 눈썹
-  brow.position.set(0.36, 0.64, 0.82);
-  pet.add(brow);
+  // 눈썹 (양쪽, 바깥이 살짝 올라간 대칭 기울기)
+  for (const sign of [-1, 1]) {
+    const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.2, 6, 10), green);
+    brow.rotation.z = 1.35 * sign;
+    brow.position.set(0.36 * sign, 0.63, 0.82);
+    pet.add(brow);
+  }
 
   // 크게 웃는 입: 초록 테두리 + 분홍 속
   const mouthOuter = new THREE.Mesh(new THREE.SphereGeometry(0.42, 26, 20), green);
@@ -141,6 +144,10 @@ export function createModel(container) {
   mouthInner.scale.set(1.42, 0.56, 0.3);
   mouthInner.position.set(0.02, -0.15, 0.96);
   pet.add(mouthOuter, mouthInner);
+  // 입 윗부분만 크림색으로 얇게 덮어 D자형(활짝 웃는 입)으로 만든다
+  const mouthCover = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 0.22), creamMat);
+  mouthCover.position.set(0.02, 0.12, 0.88);
+  pet.add(mouthCover);
 
   // 볼터치
   for (const sign of [-1, 1]) {
@@ -154,7 +161,7 @@ export function createModel(container) {
   for (const sign of [-1, 1]) {
     const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.3, 6, 12), green);
     foot.rotation.z = 0.45 * sign;
-    foot.position.set(0.58 * sign, -1.42, 0.08);
+    foot.position.set(0.58 * sign, -1.32, 0.08);
     pet.add(foot);
   }
 

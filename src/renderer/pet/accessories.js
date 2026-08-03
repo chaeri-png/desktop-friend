@@ -295,40 +295,41 @@ const BUILDERS = {
 };
 
 // ---------- 연기용 소품 (설정과 무관, 애니메이션 중에만 등장) ----------
-// 선글라스: 환호 춤 출 때 씀 — 라운드 틴트 렌즈 + 금장 브릿지
+// 선글라스: 환호 춤 출 때 씀 — 2026 트렌드 스포티 쉴드(랩어라운드 미러 바이저)
 function buildSunglasses(fit) {
   const g = new THREE.Group();
-  const rimMat = new THREE.MeshStandardMaterial({ color: 0x22211f, roughness: 0.35 });
-  const lensMat = new THREE.MeshStandardMaterial({
-    color: 0x3b2a55,
-    roughness: 0.15,
-    metalness: 0.2,
-  });
-  const gold = new THREE.MeshStandardMaterial({ color: 0xd4af6a, roughness: 0.35, metalness: 0.6 });
-  const r = Math.min(0.3, fit.eyeX * 0.85) * 1.2;
-  for (const sign of [-1, 1]) {
-    const lens = new THREE.Mesh(new THREE.CircleGeometry(r, 26), lensMat);
-    lens.position.set(fit.eyeX * sign, fit.eyeY, fit.eyeZ + 0.1);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.028, 10, 30), rimMat);
-    rim.position.set(fit.eyeX * sign, fit.eyeY, fit.eyeZ + 0.105);
-    // 렌즈 위 반짝 포인트
-    const shine = new THREE.Mesh(
-      new THREE.CircleGeometry(r * 0.2, 12),
-      new THREE.MeshBasicMaterial({ color: 0x9f8fd0 })
-    );
-    shine.position.set(fit.eyeX * sign - r * 0.35 * sign, fit.eyeY + r * 0.35, fit.eyeZ + 0.112);
-    const temple = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.45, 8), rimMat);
-    temple.rotation.x = Math.PI / 2;
-    temple.position.set((fit.eyeX + r) * sign, fit.eyeY + 0.03, fit.eyeZ - 0.13);
-    g.add(lens, rim, shine, temple);
-  }
-  const bridge = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.024, 0.024, Math.max(0.12, (fit.eyeX - r) * 2 + 0.08), 8),
-    gold
+  const R = fit.eyeZ + 0.24; // 머리를 감싸는 곡면 반지름 (눈이 뚫고 나오지 않게 여유)
+  const cy = fit.eyeY;
+  // 미러 그라데이션 렌즈 텍스처 (블루→퍼플→핑크)
+  const cv = document.createElement('canvas');
+  cv.width = 128;
+  cv.height = 64;
+  const cx = cv.getContext('2d');
+  const gr = cx.createLinearGradient(0, 0, 128, 64);
+  gr.addColorStop(0, '#7ea6f0');
+  gr.addColorStop(0.5, '#a98fe8');
+  gr.addColorStop(1, '#f0a6c8');
+  cx.fillStyle = gr;
+  cx.fillRect(0, 0, 128, 64);
+  cx.fillStyle = 'rgba(255,255,255,0.5)';
+  cx.beginPath();
+  cx.ellipse(34, 18, 22, 8, -0.25, 0, Math.PI * 2);
+  cx.fill();
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  // 흰 테두리 밴드 (렌즈보다 살짝 넓게 뒤에 깔림)
+  const rim = new THREE.Mesh(
+    new THREE.SphereGeometry(R - 0.015, 32, 12, Math.PI / 2 - 1.08, 2.16, Math.PI / 2 - 0.44, 0.88),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4, side: THREE.DoubleSide })
   );
-  bridge.rotation.z = Math.PI / 2;
-  bridge.position.set(0, fit.eyeY + r * 0.4, fit.eyeZ + 0.08);
-  g.add(bridge);
+  rim.position.set(0, cy, 0);
+  // 한 장짜리 랩어라운드 미러 렌즈
+  const lens = new THREE.Mesh(
+    new THREE.SphereGeometry(R, 32, 12, Math.PI / 2 - 0.95, 1.9, Math.PI / 2 - 0.34, 0.68),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.12, metalness: 0.3 })
+  );
+  lens.position.set(0, cy, 0);
+  g.add(rim, lens);
   return g;
 }
 

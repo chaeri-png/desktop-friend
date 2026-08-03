@@ -401,8 +401,10 @@ export function createModel(container) {
     let excite = 0;
     if (anim === 'focus') { bobAmp = 0.016; bobSpeed = 1.1; tilt = 0.1; }
     else if (anim === 'rest' || anim === 'idleFun') { bobAmp = 0.06; bobSpeed = 3.6; spin = 2.0; excite = 1; }
-    else if (anim === 'cheer') { bobAmp = 0.05; bobSpeed = 4.6; spin = 2.6; excite = 1; }
+    else if (anim === 'cheer') { bobAmp = 0.08; bobSpeed = 6.5; spin = 3.6; excite = 1; }
     else if (anim === 'drag') { bobAmp = 0.02; bobSpeed = 8; excite = 1; }
+    else if (anim === 'drink') { bobAmp = 0.012; bobSpeed = 1.6; tilt = -0.2 + Math.sin(t * 4.2) * 0.09; }
+    else if (anim === 'stretch') { bobAmp = 0.015; bobSpeed = 1.2; }
 
     if (spin) {
       petYaw += spin * dt;
@@ -440,6 +442,12 @@ export function createModel(container) {
     const sq = 1 - bob * 0.1;
     pet.scale.x = sq;
     pet.scale.z = sq;
+    if (anim === 'stretch') {
+      pet.scale.y = 1 + 0.12 * Math.abs(Math.sin(t * 1.7));
+      pet.rotation.z = Math.sin(t * 1.7) * 0.15;
+    } else {
+      pet.rotation.z = 0;
+    }
 
     if (anim !== 'drag') {
       if (t > blinkAt) {

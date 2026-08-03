@@ -214,5 +214,9 @@ window.api.on('debug-snaps', () => {
   setTimeout(() => { player?.endRotate?.(); player?.resetRotation?.(); }, 1400);
   setTimeout(() => player?.setAnimation?.('focus'), 3600);
   setTimeout(() => snap('4-focus'), 3800);
-  setTimeout(() => player?.setAnimation?.('idle'), 3950);
+  setTimeout(() => player?.setAnimation?.('drink'), 4100);
+  setTimeout(() => snap('5-drink'), 4600);
+  setTimeout(() => player?.setAnimation?.('stretch'), 4800);
+  setTimeout(() => snap('6-stretch'), 5400);
+  setTimeout(() => player?.setAnimation?.('idle'), 5600);
 });

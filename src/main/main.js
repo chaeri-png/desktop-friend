@@ -108,6 +108,7 @@ function stopRoaming(goHome = true) {
 // ---------- 뷰모델 ----------
 function animationFor(petState, now) {
   if (now < cheerUntil) return 'cheer';
+  if (petState === 'rest' && now < actUntil) return actAnim; // 휴식 중 물마시기/스트레칭 연기
   if (petState === 'idle') return now < state.idleFunUntil ? 'idleFun' : 'idle';
   return petState; // focus | rest | drag | react → 동명의 애니메이션
 }
@@ -144,6 +145,8 @@ function startTimer() {
 function stopTimer() {
   state.timer = T.stop(state.timer);
   state.pet = SM.send(state.pet, 'TIMER_STOP');
+  restActs = [];
+  actUntil = 0;
   stopRoaming();
   pushView();
 }
@@ -237,6 +240,21 @@ ipcMain.on('pet-click', () => {
 
 let cheerUntil = 0;
 
+// ---------- 휴식 중 권장 행동 (캐릭터가 직접 따라 한다) ----------
+let actUntil = 0;
+let actAnim = null;
+let restActs = [];
+const DRINK_ACT_MESSAGES = [
+  '물 마시는 시간! 저도 꿀꺽꿀꺽 💧',
+  '같이 물 한 잔 해요~ 꿀꺽꿀꺽',
+  '수분 보충 타임! 시원하게 한 잔 💧',
+];
+const STRETCH_ACT_MESSAGES = [
+  '같이 스트레칭해요! 쭉- 쭉- 🙆',
+  '팔 위로 쭉! 옆으로 쭉! 따라 해요~',
+  '스트레칭 타임! 몸을 쭉쭉 늘려요~',
+];
+
 ipcMain.on('pet-dblclick', () => {
   // 휴식 로밍 중이면 더블클릭 = 제자리 복귀
   if (roamTimer) {
@@ -271,20 +289,37 @@ function tick() {
     state.pet = SM.send(state.pet, 'REST_START');
     notify('휴식 시간!', '잘했어요. 잠깐 쉬어가요 🎉');
     say('야호! 쉬는 시간이다~ 🎉', 5000);
-    cheerUntil = now + 3000; // 폴짝폴짝 환호 후 춤으로
+    cheerUntil = now + 5000; // 5초간 신나는 환호 춤
+    // 휴식 중간에 물 마시기 → 스트레칭을 권하며 직접 따라 한다
+    restActs = [
+      { at: now + Math.max(15000, state.timer.restMs / 3), kind: 'drink' },
+      { at: now + Math.max(30000, (state.timer.restMs * 2) / 3), kind: 'stretch' },
+    ];
     roamRecalled = false; // 새 휴식이니 다시 신나게
     startRoaming();
   } else if (event === 'focus-started') {
     state.pet = SM.send(state.pet, 'FOCUS_START');
     notify('집중 시간!', '다시 집중해 볼까요? 🔥');
     say('다시 집중! 🔥', 4000);
+    restActs = [];
+    actUntil = 0;
     stopRoaming();
   } else if (event === 'cycle-ended') {
     state.pet = SM.send(state.pet, 'TIMER_STOP');
     notify('사이클 완료', '뽀모도로 한 사이클이 끝났어요!');
     say('야호! 다 끝났어요~ 또 할까요? 🎉', 5000);
-    cheerUntil = now + 3000;
+    cheerUntil = now + 5000;
+    restActs = [];
+    actUntil = 0;
     stopRoaming();
+  }
+
+  // 휴식 중 권장 행동 실행: 말풍선 + 캐릭터가 직접 물 마시기/스트레칭
+  if (state.pet.state === 'rest' && restActs.length && now >= restActs[0].at) {
+    const act = restActs.shift();
+    actAnim = act.kind;
+    actUntil = now + 7000;
+    say(pickFrom(act.kind === 'drink' ? DRINK_ACT_MESSAGES : STRETCH_ACT_MESSAGES), 6000);
   }
 
   // 유휴 랜덤 모션: idle일 때 낮은 확률로 3초간 idleFun 재생

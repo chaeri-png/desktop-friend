@@ -313,8 +313,10 @@ export function createModel(container) {
     let wobble = 0;
     if (anim === 'focus') { bobAmp = 0.025; bobSpeed = 1.4; tilt = 0.1; }
     else if (anim === 'rest' || anim === 'idleFun') { bobAmp = 0.09; bobSpeed = 5; spin = 2.6; wobble = 0.08; }
-    else if (anim === 'cheer') { bobAmp = 0.06; bobSpeed = 6; spin = 3.2; wobble = 0.1; }
+    else if (anim === 'cheer') { bobAmp = 0.08; bobSpeed = 6.5; spin = 3.6; wobble = 0.1; }
     else if (anim === 'drag') { bobAmp = 0.02; bobSpeed = 9; wobble = 0.09; }
+    else if (anim === 'drink') { bobAmp = 0.012; bobSpeed = 1.6; tilt = -0.2 + Math.sin(t * 4.2) * 0.09; }
+    else if (anim === 'stretch') { bobAmp = 0.015; bobSpeed = 1.2; }
 
     if (spin) {
       birdYaw += spin * dt;
@@ -334,7 +336,8 @@ export function createModel(container) {
     }
     bird.rotation.y = birdYaw;
     bird.rotation.x = tilt;
-    bird.rotation.z = wobble ? Math.sin(t * 16) * wobble : 0;
+    bird.rotation.z =
+      anim === 'stretch' ? Math.sin(t * 1.7) * 0.15 : wobble ? Math.sin(t * 16) * wobble : 0;
 
     const bob = Math.sin(t * bobSpeed * 2) * bobAmp;
     let jump = 0;
@@ -350,6 +353,7 @@ export function createModel(container) {
     const sq = 1 - bob * 0.12;
     bird.scale.x = sq;
     bird.scale.z = sq;
+    if (anim === 'stretch') bird.scale.y = 1 + 0.12 * Math.abs(Math.sin(t * 1.7));
 
     if (anim !== 'drag') {
       if (t > blinkAt) {

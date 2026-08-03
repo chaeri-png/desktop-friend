@@ -295,46 +295,67 @@ const BUILDERS = {
 };
 
 // ---------- 연기용 소품 (설정과 무관, 애니메이션 중에만 등장) ----------
-// 선글라스: 환호 춤 출 때 씀
+// 선글라스: 환호 춤 출 때 씀 — 라운드 틴트 렌즈 + 금장 브릿지
 function buildSunglasses(fit) {
   const g = new THREE.Group();
-  const dark = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.3 });
-  const lensR = Math.min(0.3, fit.eyeX * 0.85) * 1.15;
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0x22211f, roughness: 0.35 });
+  const lensMat = new THREE.MeshStandardMaterial({
+    color: 0x3b2a55,
+    roughness: 0.15,
+    metalness: 0.2,
+  });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xd4af6a, roughness: 0.35, metalness: 0.6 });
+  const r = Math.min(0.3, fit.eyeX * 0.85) * 1.2;
   for (const sign of [-1, 1]) {
-    const lens = new THREE.Mesh(new THREE.CircleGeometry(lensR, 24), dark);
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(r, 26), lensMat);
     lens.position.set(fit.eyeX * sign, fit.eyeY, fit.eyeZ + 0.1);
-    g.add(lens);
-    const temple = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.45, 8), dark);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.028, 10, 30), rimMat);
+    rim.position.set(fit.eyeX * sign, fit.eyeY, fit.eyeZ + 0.105);
+    // 렌즈 위 반짝 포인트
+    const shine = new THREE.Mesh(
+      new THREE.CircleGeometry(r * 0.2, 12),
+      new THREE.MeshBasicMaterial({ color: 0x9f8fd0 })
+    );
+    shine.position.set(fit.eyeX * sign - r * 0.35 * sign, fit.eyeY + r * 0.35, fit.eyeZ + 0.112);
+    const temple = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.45, 8), rimMat);
     temple.rotation.x = Math.PI / 2;
-    temple.position.set((fit.eyeX + lensR) * sign, fit.eyeY + 0.03, fit.eyeZ - 0.14);
-    g.add(temple);
+    temple.position.set((fit.eyeX + r) * sign, fit.eyeY + 0.03, fit.eyeZ - 0.13);
+    g.add(lens, rim, shine, temple);
   }
-  // 위쪽 일자 프레임 바
-  const bar = new THREE.Mesh(
-    new THREE.BoxGeometry(fit.eyeX * 2 + lensR * 1.4, 0.05, 0.03),
-    dark
+  const bridge = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.024, 0.024, Math.max(0.12, (fit.eyeX - r) * 2 + 0.08), 8),
+    gold
   );
-  bar.position.set(0, fit.eyeY + lensR * 0.8, fit.eyeZ + 0.09);
-  g.add(bar);
+  bridge.rotation.z = Math.PI / 2;
+  bridge.position.set(0, fit.eyeY + r * 0.4, fit.eyeZ + 0.08);
+  g.add(bridge);
   return g;
 }
 
-// 물병: 물 마시기 연기 때 입가에 기울여 든다
+// 물병: 물 마시기 연기 때 입구가 입에 닿게 기울여 든다
 function buildBottle(fit) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.09, 0.09, 0.3, 14),
-    new THREE.MeshStandardMaterial({ color: 0x9ed2f0, roughness: 0.3, transparent: true, opacity: 0.85 })
+  const water = new THREE.MeshStandardMaterial({
+    color: 0x7ec3ec,
+    roughness: 0.2,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.5, 16), water);
+  const label = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.135, 0.135, 0.14, 16),
+    new THREE.MeshStandardMaterial({ color: 0xf6f6f2, roughness: 0.6 })
   );
   const cap = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.05, 0.05, 0.07, 12),
-    new THREE.MeshStandardMaterial({ color: 0xf5f5f2, roughness: 0.6 })
+    new THREE.CylinderGeometry(0.06, 0.06, 0.09, 12),
+    new THREE.MeshStandardMaterial({ color: 0x4a90c2, roughness: 0.5 })
   );
-  cap.position.y = 0.18;
-  g.add(body, cap);
-  const [bx, by, bz] = fit.bottle ?? [0.3, fit.eyeY - 0.28, fit.eyeZ + 0.16];
+  cap.position.y = 0.29;
+  g.add(body, label, cap);
+  // 병 입구(캡)가 입 높이(눈보다 한참 아래)에 오도록 배치
+  const [bx, by, bz] = fit.bottle ?? [0.34, fit.eyeY - 0.5, fit.eyeZ + 0.22];
   g.position.set(bx, by, bz);
-  g.rotation.z = 0.55; // 입 쪽으로 기울여 꿀꺽
+  g.rotation.z = 0.85; // 입 쪽으로 푹 기울여 꿀꺽
   return g;
 }
 

@@ -219,6 +219,6 @@ window.api.on('debug-snaps', () => {
   setTimeout(() => player?.setAnimation?.('stretch'), 4800);
   setTimeout(() => snap('6-stretch'), 5400);
   setTimeout(() => player?.setAnimation?.('cheer'), 5600);
-  setTimeout(() => snap('7-dance'), 6100);
+  setTimeout(() => snap('7-dance'), 5750); // 회전 전에 정면 컷
   setTimeout(() => player?.setAnimation?.('idle'), 6300);
 });

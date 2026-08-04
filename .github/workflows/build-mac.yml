@@ -21,7 +21,10 @@ jobs:
         run: npm run icons
       - name: dmg 빌드
         # --publish never: CI에서 릴리스 자동 게시 시도 안 함 (dmg 파일만 생성)
+        # 약식 서명은 scripts/adhoc-sign.cjs(afterPack)에서 강제로 넣는다
         run: npm run dist:mac -- --publish never
+      - name: 서명 확인
+        run: codesign --verify --verbose=2 "release/mac-arm64/Desktop friend by chaeri.app"
       - name: dmg 업로드
         uses: actions/upload-artifact@v4
         with:

@@ -27,9 +27,11 @@
       "target": "nsis"
     },
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "identity": null
     },
-    "publish": null
+    "publish": null,
+    "afterPack": "./scripts/adhoc-sign.cjs"
   },
   "devDependencies": {
     "electron": "^31.7.7",

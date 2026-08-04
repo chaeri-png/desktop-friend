@@ -1,5 +1,9 @@
 # 맥용 설치 파일(dmg) 자동 빌드
 # 사용법: GitHub 저장소 → Actions 탭 → "Mac 빌드 (dmg)" → Run workflow 버튼
+#
+# 애플 개발자 인증서가 없으므로 약식(ad-hoc) 서명을 직접 넣는다.
+# 서명이 아예 없으면 애플 실리콘 맥이 앱을 "악성 코드"로 판정해 휴지통으로 보내기 때문에,
+# 앱 빌드 → 서명 → 검증 → dmg 생성 순서로 나눠서 진행하고 검증에 실패하면 빌드를 중단시킨다.
 name: Mac 빌드 (dmg)
 
 on:
@@ -8,23 +12,49 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    # 참고: 서명을 완전히 끄면 애플 실리콘 맥이 앱을 "악성 코드"로 판정해 휴지통으로 보낸다.
-    # electron-builder가 기본으로 해주는 약식(ad-hoc) 서명을 그대로 두면 정상 설치된다.
+    env:
+      APP_PATH: release/mac-arm64/Desktop friend by chaeri.app
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: 의존성 설치
         run: npm ci
+
       - name: 아이콘 생성
         run: npm run icons
-      - name: dmg 빌드
-        # --publish never: CI에서 릴리스 자동 게시 시도 안 함 (dmg 파일만 생성)
-        # 약식 서명은 scripts/adhoc-sign.cjs(afterPack)에서 강제로 넣는다
-        run: npm run dist:mac -- --publish never
-      - name: 서명 확인
-        run: codesign --verify --verbose=2 "release/mac-arm64/Desktop friend by chaeri.app"
+
+      - name: 앱 빌드 (dmg 포장 전 단계)
+        run: npx electron-builder --mac dir --publish never
+
+      - name: 약식 서명 (안쪽부터 바깥으로)
+        run: |
+          set -euo pipefail
+          APP="$APP_PATH"
+          echo "서명 대상: $APP"
+          # 프레임워크·헬퍼 앱 등 중첩된 바이너리를 먼저 서명
+          find "$APP/Contents/Frameworks" -type d \( -name "*.framework" -o -name "*.app" \) -maxdepth 1 -print0 |
+            while IFS= read -r -d '' item; do
+              echo "  - $item"
+              codesign --force --sign - --timestamp=none "$item"
+            done
+          # 마지막에 앱 전체 서명
+          codesign --force --deep --sign - --timestamp=none "$APP"
+
+      - name: 서명 검증 (실패하면 빌드 중단)
+        run: |
+          set -euo pipefail
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          echo "--- 서명 정보 ---"
+          codesign --display --verbose=2 "$APP_PATH"
+          echo "--- Gatekeeper 평가 (공증 없으므로 rejected가 정상) ---"
+          spctl --assess --type execute -vv "$APP_PATH" || true
+
+      - name: dmg 만들기
+        run: npx electron-builder --mac dmg --prepackaged "$APP_PATH" --publish never
+
       - name: dmg 업로드
         uses: actions/upload-artifact@v4
         with:

@@ -59,21 +59,21 @@ export function createModel(container) {
     [0.97, 0.7], [0.78, 1.12], [0.05, 1.44], [-0.68, 1.18], [-0.93, 0.73],
     [-1.28, 0.66], [-1.6, 0.08], [-1.4, -0.56], [-0.85, -1.16],
   ];
-  function cloudShape(scale) {
-    const s = new THREE.Shape();
-    const pts = OUTLINE.map(([x, y]) => new THREE.Vector2(x * scale, y * scale));
-    s.moveTo(pts[0].x, pts[0].y);
-    s.splineThru(pts.slice(1));
-    s.closePath();
-    return s;
-  }
+  // 시작점과 끝점이 매끈하게 이어지도록 닫힌 스플라인으로 외곽선을 만든다
+  // (Shape.closePath는 직선으로 닫혀 아랫부분에 꺾인 돌출이 생겼음)
+  const outlineCurve = new THREE.CatmullRomCurve3(
+    OUTLINE.map(([x, y]) => new THREE.Vector3(x, y, 0)),
+    true,
+    'catmullrom',
+    0.5
+  );
   // 원화 실루엣을 그대로 유지한 채 앞뒤로 둥글게 부풀린 3D 볼륨:
   // 방위각별 외곽 반지름 R(θ)를 스플라인에서 뽑아, 구의 xy를 R(θ)로 늘리고 z는 쿠션처럼 둥글린다
   const DEPTH = 0.95;
   const R_BINS = 720;
   const rTable = new Float32Array(R_BINS).fill(0);
   {
-    const pts = cloudShape(1).getPoints(512);
+    const pts = outlineCurve.getPoints(1024);
     for (const p of pts) {
       const a = Math.atan2(p.y, p.x);
       const bin = ((Math.round((a / (Math.PI * 2)) * R_BINS) % R_BINS) + R_BINS) % R_BINS;

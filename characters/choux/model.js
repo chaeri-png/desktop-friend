@@ -54,10 +54,12 @@ export function createModel(container) {
 
   // ---------- 몸: 원화 외곽선을 그대로 딴 실루엣을 도톰하게 부풀린 형태 ----------
   // 정면 모습 = 원화와 동일. 진초록 테두리도 뒤판으로 재현한다.
+  // 정수리에서 양옆 봉우리로 y가 계속 내려오도록 잡은 좌표
+  // (예전엔 어깨 구간 y가 평평해 옆이 위로 솟아 보였음)
   const OUTLINE = [
-    [0, -1.3], [0.85, -1.16], [1.42, -0.6], [1.6, 0.1], [1.28, 0.66],
-    [0.97, 0.7], [0.78, 1.12], [0.05, 1.44], [-0.68, 1.18], [-0.93, 0.73],
-    [-1.28, 0.66], [-1.6, 0.08], [-1.4, -0.56], [-0.85, -1.16],
+    [0, -1.32], [0.85, -1.18], [1.42, -0.68], [1.6, -0.05], [1.3, 0.5],
+    [0.9, 0.72], [0.72, 1.06], [0.02, 1.42], [-0.72, 1.06], [-0.9, 0.72],
+    [-1.3, 0.5], [-1.6, -0.05], [-1.42, -0.68], [-0.85, -1.18],
   ];
   // 시작점과 끝점이 매끈하게 이어지도록 닫힌 스플라인으로 외곽선을 만든다
   // (Shape.closePath는 직선으로 닫혀 아랫부분에 꺾인 돌출이 생겼음)
@@ -155,19 +157,28 @@ export function createModel(container) {
   const mouthOuter = new THREE.Mesh(halfDisc(0.6), green);
   mouthOuter.scale.set(1, 0.78, 1);
   mouthOuter.position.set(0.02, 0.02, 0.82);
-  const mouthInner = new THREE.Mesh(
-    halfDisc(0.46),
-    new THREE.MeshStandardMaterial({ color: 0xc9968f, roughness: 0.9 })
+  pet.add(mouthOuter);
+  // 입 안쪽: 위는 어두운 입안, 아래는 도톰한 분홍 혀
+  const mouthCavity = new THREE.Mesh(
+    halfDisc(0.5),
+    new THREE.MeshStandardMaterial({ color: 0x24401f, roughness: 0.9 })
   );
-  mouthInner.scale.set(1, 0.74, 1);
-  mouthInner.position.set(0.02, -0.04, 0.9);
-  pet.add(mouthOuter, mouthInner);
+  mouthCavity.scale.set(1, 0.74, 1);
+  mouthCavity.position.set(0.02, -0.02, 0.88);
+  const tongue = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 26, 18),
+    new THREE.MeshStandardMaterial({ color: 0xd49a92, roughness: 0.85 })
+  );
+  tongue.scale.set(0.85, 0.45, 0.28);
+  tongue.position.set(0.02, -0.19, 1.04); // 입 안쪽 면보다 앞으로
+  pet.add(mouthCavity, tongue);
 
   // 볼터치
   for (const sign of [-1, 1]) {
-    const blush = new THREE.Mesh(new THREE.CircleGeometry(0.24, 22), blushMat);
-    blush.position.set(0.76 * sign, 0.05, 0.72);
-    blush.rotation.y = 0.35 * sign;
+    const blush = new THREE.Mesh(new THREE.CircleGeometry(0.27, 26), blushMat);
+    blush.scale.set(1, 0.92, 1);
+    blush.position.set(0.78 * sign, 0.06, 0.86); // 몸 표면 앞으로 빼서 또렷하게
+    blush.rotation.y = 0.3 * sign;
     pet.add(blush);
   }
 

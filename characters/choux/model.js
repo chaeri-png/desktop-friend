@@ -125,29 +125,43 @@ export function createModel(container) {
   eyeR.position.set(0.3, 0.31, 0.86);
   pet.add(eyeL, eyeR);
 
-  // 눈썹 (양쪽, 바깥이 살짝 올라간 대칭 기울기)
+  // 눈썹 (양쪽, 위로 솟은 아치 — 발랄한 인상). 왼쪽은 그룹 반전으로 완전 대칭
   for (const sign of [-1, 1]) {
-    const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.2, 6, 10), green);
-    brow.rotation.z = 1.35 * sign;
-    brow.position.set(0.36 * sign, 0.63, 0.82);
-    pet.add(brow);
+    const holder = new THREE.Group();
+    const brow = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.038, 8, 24, 1.45), green);
+    brow.rotation.z = 0.62; // 아치 꼭대기가 위·바깥쪽을 향하게
+    brow.position.set(0.33, 0.63, 0.8);
+    holder.add(brow);
+    if (sign < 0) holder.scale.x = -1;
+    pet.add(holder);
   }
 
   // 크게 웃는 입: 초록 테두리 + 분홍 속
-  const mouthOuter = new THREE.Mesh(new THREE.SphereGeometry(0.42, 26, 20), green);
-  mouthOuter.scale.set(1.45, 0.62, 0.3); // 옆으로 넓게 활짝 웃는 입
-  mouthOuter.position.set(0.02, -0.1, 0.88);
+  // 반달(D자) 모양 — 윗선은 반듯하고 아래는 둥근 활짝 웃는 입
+  function halfDisc(w) {
+    const s = new THREE.Shape();
+    s.moveTo(w, 0);
+    s.absarc(0, 0, w, 0, Math.PI, true); // 아래쪽 반원
+    s.closePath();
+    return new THREE.ExtrudeGeometry(s, {
+      depth: 0.16,
+      bevelEnabled: true,
+      bevelThickness: 0.04,
+      bevelSize: 0.03,
+      bevelSegments: 3,
+      curveSegments: 40,
+    });
+  }
+  const mouthOuter = new THREE.Mesh(halfDisc(0.6), green);
+  mouthOuter.scale.set(1, 0.78, 1);
+  mouthOuter.position.set(0.02, 0.02, 0.82);
   const mouthInner = new THREE.Mesh(
-    new THREE.SphereGeometry(0.32, 22, 16),
+    halfDisc(0.46),
     new THREE.MeshStandardMaterial({ color: 0xc9968f, roughness: 0.9 })
   );
-  mouthInner.scale.set(1.42, 0.56, 0.3);
-  mouthInner.position.set(0.02, -0.15, 0.96);
+  mouthInner.scale.set(1, 0.74, 1);
+  mouthInner.position.set(0.02, -0.04, 0.9);
   pet.add(mouthOuter, mouthInner);
-  // 입 윗부분만 크림색으로 얇게 덮어 D자형(활짝 웃는 입)으로 만든다
-  const mouthCover = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 0.22), creamMat);
-  mouthCover.position.set(0.02, 0.12, 0.88);
-  pet.add(mouthCover);
 
   // 볼터치
   for (const sign of [-1, 1]) {
